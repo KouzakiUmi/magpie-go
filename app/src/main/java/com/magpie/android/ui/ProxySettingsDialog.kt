@@ -80,7 +80,15 @@ class ProxySettingsDialog(
         dialog = Dialog(context).apply {
             setTitle(R.string.proxy_dialog_title)
             val content = buildContent()
-            setContentView(ScrollView(context).apply { addView(content) })
+            val dark = isDarkTheme()
+            applyPalette(content, dark)
+            setContentView(ScrollView(context).apply {
+                setBackgroundColor(if (dark) Color.parseColor("#101624") else Color.parseColor("#F7F1E6"))
+                addView(content)
+            })
+            window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(
+                if (dark) Color.parseColor("#101624") else Color.parseColor("#F7F1E6"),
+            ))
             window?.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -235,11 +243,20 @@ class ProxySettingsDialog(
             providerTargets = hosts.map { host ->
                 if (host.startsWith("http://") || host.startsWith("https://")) host else "https://$host"
             }
-            targetPicker.adapter = android.widget.ArrayAdapter(
+            val dark = isDarkTheme()
+            targetPicker.adapter = object : android.widget.ArrayAdapter<String>(
                 context,
                 android.R.layout.simple_spinner_dropdown_item,
                 providerTargets,
-            )
+            ) {
+                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                    return super.getView(position, convertView, parent).also { styleDropDown(it, dark) }
+                }
+
+                override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                    return super.getDropDownView(position, convertView, parent).also { styleDropDown(it, dark) }
+                }
+            }
             targetPicker.visibility = View.VISIBLE
             targetInput.setText(providerTargets.first())
         }
@@ -378,6 +395,53 @@ class ProxySettingsDialog(
     ).apply { topMargin = px }
 
     private fun dp(value: Int) = (value * context.resources.displayMetrics.density).toInt()
+
+    private fun isDarkTheme(): Boolean = when (ThemePreferenceStore.get(context)) {
+        ThemePreference.Dark -> true
+        ThemePreference.Light -> false
+        ThemePreference.FollowSystem ->
+            context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private fun applyPalette(view: View, dark: Boolean) {
+        val foreground = Color.parseColor(if (dark) "#F5ECDD" else "#17233D")
+        val secondary = Color.parseColor(if (dark) "#C6D2E4" else "#5F6368")
+        val field = Color.parseColor(if (dark) "#24324B" else "#F7F1E6")
+        val button = Color.parseColor(if (dark) "#2D4E7E" else "#E5DED2")
+        when (view) {
+            is EditText -> {
+                view.setTextColor(foreground)
+                view.setHintTextColor(secondary)
+                view.background = GradientDrawable().apply {
+                    setColor(field)
+                    setStroke(dp(1), Color.parseColor("#72819A"))
+                    cornerRadius = dp(8).toFloat()
+                }
+            }
+            is CheckBox -> {
+                view.setTextColor(foreground)
+                view.buttonTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#62D0C5"))
+            }
+            is Button -> {
+                view.setTextColor(foreground)
+                view.setBackgroundColor(button)
+            }
+            is TextView -> view.setTextColor(foreground)
+        }
+        if (view is android.widget.Spinner) view.setBackgroundColor(field)
+        if (view is ProgressBar) view.indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#62D0C5"))
+        if (view is ViewGroup) {
+            repeat(view.childCount) { index -> applyPalette(view.getChildAt(index), dark) }
+        }
+    }
+
+    private fun styleDropDown(view: View, dark: Boolean) {
+        if (view is TextView) {
+            view.setTextColor(Color.parseColor(if (dark) "#F5ECDD" else "#17233D"))
+            view.setBackgroundColor(Color.parseColor(if (dark) "#24324B" else "#F7F1E6"))
+        }
+    }
 
     private companion object {
         const val PROBE_TIMEOUT_MS = 6_000L

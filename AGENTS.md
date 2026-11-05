@@ -42,7 +42,8 @@
 - `MagpieWebContainer.brandedAsset()` 仅拦截 loopback 的 favicon、触控图标、大头照、派卡挥翼/飞行帧与 `xq_light/dark` 固定资源路径，返回 `assets/branding/` 本地素材，不改 `libmagpie.so` 或其他请求。路由运动组 `g.rt-flier` 保留 transform，内部使用图像生成的上举/中间/下落三帧拍翅动画，替换操作幂等，避免 MutationObserver 重建循环。视频响应提供完整流和 `Accept-Ranges: bytes`，由 Chromium 应用 Range；不要在应用层重复跳过字节或合成第二个 206。
 - 网页左上角沿用 `.brand .logo` 点击区域，注入像素角色；演示入口使用 `mascot-head.png` 完整大头照；不重写管理页。
 - 脱敏视频为 672×448 横版，以原关键帧动作和构图为目标替换角色，保留八段羽翼动作、27.5 秒、原舞台坐标、单遍播放、懒加载、折叠释放源、减少动态效果与无视频回退。
-- 首页和全屏 About 使用图像生成的派卡原画帧与 `drawable/pica_frame_animation.xml`，包含站立、Wink、挥翼和开心动作；不使用脚本修图。工具栏为菜单（含导出日志）/网络代理/关于；主题偏好保存在 `magpie_go_ui`。
+- 首页和全屏 About 使用图像生成的派卡原画帧与 `drawable/pica_frame_animation.xml`，包含站立、Wink、挥翼和开心动作；不使用脚本修图。工具栏为菜单（含导出日志）/网络代理/关于；主题偏好保存在 `magpie_go_ui`，并直接写入 WebView 的 `data-theme`，跟随系统在当前系统亮暗间切换，不依赖上游 `system`。持久化使用 `prefWrite`，Compose 不整套重建。
+- 代理设置页使用同一主题；`providerHosts()` 只接受真实 HTTP(S) 主机，过滤邮箱、订阅状态和非法 URL。中央卡片使用 `magpie-smile.png`，运动组使用飞行帧，静态回退保留且限制为 44dp。
 - 原稿、派生脚本和维护说明见 `design/pixel-mascot/README.md`；不要覆盖原稿。
 
 ## WebView 窄屏适配

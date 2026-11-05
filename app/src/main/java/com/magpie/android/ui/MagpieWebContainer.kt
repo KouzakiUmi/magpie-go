@@ -44,6 +44,7 @@ class MagpieWebContainer(
     context: Context,
     private val status: MagpieStatus,
     private val onBack: () -> Unit,
+    private val themePreference: ThemePreference = ThemePreference.FollowSystem,
     /**
      * 渲染进程崩溃时的回调。
      *
@@ -170,6 +171,32 @@ class MagpieWebContainer(
 
     fun reload() {
         webView?.reload()
+    }
+
+    private fun isDarkTheme(): Boolean = when (themePreference) {
+        ThemePreference.Dark -> true
+        ThemePreference.Light -> false
+        ThemePreference.FollowSystem ->
+            context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    fun applyThemePreference(preference: ThemePreference, persist: Boolean = false) {
+        val theme = when (preference) {
+            ThemePreference.Dark -> "dark"
+            ThemePreference.Light -> "light"
+            ThemePreference.FollowSystem -> if (isDarkTheme()) "dark" else "light"
+        }
+        webView?.evaluateJavascript(
+            "(function(){var apply=function(attempt){"
+                + "if(attempt>20)return;"
+                + "document.documentElement.dataset.theme='$theme';"
+                + "if($persist && typeof prefWrite==='function' && typeof prefs!=='undefined' && prefs){prefWrite({theme:'$theme'});return;}"
+                + "if(!$persist)return;"
+                + "setTimeout(function(){apply(attempt+1);},250);"
+                + "};apply(0);})()",
+            null,
+        )
     }
 
     fun openSettings() {
@@ -415,7 +442,7 @@ class MagpieWebContainer(
                 document.querySelectorAll('svg g.rt-flier').forEach(function (group) {
                   if (group.dataset.magpiePica) return;
                   var flight = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-                  flight.setAttribute('href', '/plugins/redact/pica_flight.png');
+                  flight.setAttribute('href', '/plugins/redact/pica-flight-up.png');
                   flight.setAttribute('class', 'pica-flap-a');
                   flight.setAttribute('x', '-22');
                   flight.setAttribute('y', '-22');
@@ -423,7 +450,7 @@ class MagpieWebContainer(
                   flight.setAttribute('height', '44');
                   flight.setAttribute('preserveAspectRatio', 'xMidYMid meet');
                   var wave = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-                  wave.setAttribute('href', '/plugins/redact/pica_wave.png');
+                  wave.setAttribute('href', '/plugins/redact/pica-flight-mid.png');
                   wave.setAttribute('class', 'pica-flap-b');
                   wave.setAttribute('x', '-22');
                   wave.setAttribute('y', '-22');
@@ -471,13 +498,16 @@ class MagpieWebContainer(
                   group.dataset.magpiePica = '1';
                 });
                 document.querySelectorAll('svg').forEach(function (svg) {
-                  if (svg.closest('.brand .logo') || !svg.querySelector('use[href="#bird"]')) return;
+                  if (svg.closest('.brand .logo') || svg.closest('.rt-sky,.rt-wires') || !svg.querySelector('use[href="#bird"]')) return;
                   var img = document.createElement('img');
                   var roaming = !!svg.closest('.sk-bird');
                   img.className = roaming ? 'magpie-skeleton-logo' : 'magpie-inline-logo';
                   if (svg.className.baseVal) img.className += ' ' + svg.className.baseVal;
                   img.alt = 'Magpie Go';
-                  img.src = roaming ? 'icons/magpie-jump.png' : 'icons/magpie-smile.png';
+                  img.style.width = '44px';
+                  img.style.height = '44px';
+                  img.style.objectFit = 'contain';
+                  img.src = roaming ? '/plugins/redact/pica-flight-up.png' : 'icons/magpie-smile.png';
                   svg.replaceWith(img);
                 });
                 document.querySelectorAll('.rt-hub').forEach(replaceMagpieWord);
@@ -641,6 +671,7 @@ class MagpieWebContainer(
 
                 override fun onPageFinished(view: WebView, finishedUrl: String) {
                     applyNarrowScreenFixes(view)
+                    applyThemePreference(themePreference)
                     // 把 key 换来的 Cookie 落盘，冷启动才能免登录
                     manager.flush()
                     super.onPageFinished(view, finishedUrl)

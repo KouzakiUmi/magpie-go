@@ -464,8 +464,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                 if (trimmed.isEmpty() || !line.startsWith(" ")) return@mapNotNull null
                 // 列之间是连续空白；兼容完整 URL 与第 3 列 host 两种格式
                 val columns = trimmed.split(Regex("""\s{2,}"""))
-                columns.firstOrNull { it.startsWith("http://") || it.startsWith("https://") }
-                    ?: columns.getOrNull(2)?.takeIf { it.contains('.') || it.contains(':') }
+                columns.firstNotNullOfOrNull { normalizeProviderHost(it) }
             }
             .distinct()
             .toList()
@@ -789,4 +788,18 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
         is IllegalStateException -> e.message?.takeIf { it in setOf("设备 ABI 不支持或 APK 缺少运行时资产", "内置 magpie SHA256 校验失败", "运行时资产不完整", "无法准备运行时私有目录", "本地端口已被占用", "magpie 进程提前退出", "管理页健康检查超时", "代理命令超时", "代理命令执行失败", "前台服务启动失败", "旧进程未在限定时间内停止") } ?: "运行时错误"
         else -> "运行时异常"
     }
+}
+
+/** Only accepts an actual HTTP(S) endpoint, never status text or account identities. */
+internal fun normalizeProviderHost(value: String): String? {
+    val candidate = value.trim()
+    if (candidate.isEmpty() || candidate.any { it.isWhitespace() }) return null
+    val uri = runCatching {
+        java.net.URI(if (candidate.startsWith("http://") || candidate.startsWith("https://")) candidate else "https://$candidate")
+    }.getOrNull() ?: return null
+    if (uri.scheme != "http" && uri.scheme != "https") return null
+    val host = uri.host ?: return null
+    if (!uri.userInfo.isNullOrEmpty() || host.isEmpty()) return null
+    if (!host.contains('.') && host != "localhost" && !host.contains(':')) return null
+    return uri.toString()
 }

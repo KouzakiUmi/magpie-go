@@ -43,6 +43,10 @@ class MainActivity : ComponentActivity() {
     private var runtimeProvider: MagpieRuntimeProvider? = null
     private var startConfig = MagpieConfig()
     private lateinit var composeHost: ComposeView
+    private var composeInitialized = false
+    private val themePreferenceState by lazy {
+        androidx.compose.runtime.mutableStateOf(ThemePreferenceStore.get(this))
+    }
     private var themePreference = ThemePreference.FollowSystem
     /** 渲染进程崩溃的次数；变化后强制重建 WebView 容器。 */
     private var webRenderGeneration = 0
@@ -97,19 +101,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun applyTheme() {
-        composeHost.setContent {
-            MagpieTheme(preference = themePreference) {
-                MagpieApp(
-                    runtime = runtimeProvider?.runtime(),
-                    startConfig = startConfig,
-                    onExit = ::finish,
-                    onShowWeb = ::showWeb,
-                    onHideWeb = ::removeWebContainer,
-                    onShowExtras = ::showExtraComponents,
-                )
+        if (!composeInitialized) {
+            composeHost.setContent {
+                MagpieTheme(preference = themePreferenceState.value) {
+                    MagpieApp(
+                        runtime = runtimeProvider?.runtime(),
+                        startConfig = startConfig,
+                        onExit = ::finish,
+                        onShowWeb = ::showWeb,
+                        onHideWeb = ::removeWebContainer,
+                        onShowExtras = ::showExtraComponents,
+                    )
+                }
             }
+            composeInitialized = true
+        } else {
+            themePreferenceState.value = themePreference
         }
         updateToolbarColors()
+        contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)?.applyThemePreference(themePreference)
     }
 
     private fun isDarkTheme(): Boolean = when (themePreference) {
@@ -147,6 +157,8 @@ class MainActivity : ComponentActivity() {
             themePreference = preference
             ThemePreferenceStore.set(this, preference)
             applyTheme()
+            contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)
+                ?.applyThemePreference(preference, persist = true)
         }
     }
 
@@ -162,6 +174,7 @@ class MainActivity : ComponentActivity() {
             this,
             status,
             onBack = { handleBack() },
+            themePreference = themePreference,
             onRendererGone = {
                 // 渲染进程崩溃：立刻拆掉旧容器并重建。
                 //
@@ -270,7 +283,11 @@ class MainActivity : ComponentActivity() {
 
     /** 「菜单」：网关控制与重置。 */
     private fun showToolsMenu() {
-        val popup = android.widget.PopupMenu(this, toolBar.findViewWithTag<android.view.View>(TOOLBAR_TAG) ?: toolBar)
+        val menuContext = android.view.ContextThemeWrapper(
+            this,
+            if (isDarkTheme()) android.R.style.Theme_Material else android.R.style.Theme_Material_Light,
+        )
+        val popup = android.widget.PopupMenu(menuContext, toolBar.findViewWithTag<android.view.View>(TOOLBAR_TAG) ?: toolBar)
         val running = runtimeInstance?.status()?.phase == MagpiePhase.Running
         popup.menu.add(0, MENU_RESTART, 0, R.string.gateway_restart).isEnabled = running
         popup.menu.add(0, MENU_STOP, 1, R.string.gateway_stop).isEnabled = running
@@ -466,6 +483,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // 用户可能刚在系统设置里改了电池豁免，回来时把通知里的过期入口去掉
         AndroidMagpieRuntime.getInstance(this).activeService()?.refreshNotification()
+        contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)?.applyThemePreference(themePreference)
     }
 
     @Deprecated("老式返回键")
@@ -506,7 +524,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (themePreference == ThemePreference.FollowSystem) updateToolbarColors()
+        if (themePreference == ThemePreference.FollowSystem) applyTheme()
     }
 
     override fun onDestroy() {

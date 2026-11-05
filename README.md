@@ -21,7 +21,7 @@
 - PRoot：提供 DNS、CA 证书和 Magpie 所需运行环境。
 - DSH Go：通过独立上游项目的 Provider/ConfigEditor 写入 `cordis.patch.yml`，不跨应用直接读写私有文件。
 
-DSH Go 的接收端改动是独立上游 PR 工作，不属于本仓库的 Magpie Go 包。接入设计见 [`docs/dsh-go-one-click-provider.md`](docs/dsh-go-one-click-provider.md)。
+DSH Go 上游不接受 PR，因此提供基于当前上游的**修改版 DSH Go APK**，包含 Magpie 接入与模型选择器改动，不向官方提交 PR。接入设计见 [`docs/dsh-go-one-click-provider.md`](docs/dsh-go-one-click-provider.md)，构建取舍见 [`docs/dsh-go-pr-handoff.md`](docs/dsh-go-pr-handoff.md)。
 
 ## 构建
 

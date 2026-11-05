@@ -29,7 +29,7 @@
 ## 3. UI 架构
 
 - Compose 负责安装、启动、错误和加载页。首页采用 Open Design `minimalist-ui` 的暖色单色方案：编辑式标题、细边框卡片、派卡主视觉、左对齐说明和单色主按钮；浅色使用暖白，深色使用低饱和海军蓝。
-- 工具栏为左侧菜单（含导出日志）、中间网络代理、右侧关于。全屏 About 使用作者头像、派卡原画帧动画、主题选择、检查更新和 Magpie 配置/官网/社区/开源许可链接；主题偏好存储在 `magpie_go_ui`。
+- 工具栏为左侧菜单（含导出日志）、中间网络代理、右侧关于。全屏 About 使用作者头像、派卡原画帧动画、主题选择、检查更新和 Magpie 配置/官网/社区/开源许可链接；主题偏好存储在 `magpie_go_ui`，并直接控制 WebView `data-theme`，代理设置页和底部菜单同步使用当前主题。
 - 运行中由原生 `FrameLayout` 承载 WebView，不能把 WebView 移入 Compose `AndroidView`，也不能用 `setContent { }` 替换 Activity 根视图。
 - 管理页仍由 Magpie 自己提供，Android 只注入窄屏适配、品牌角色、备份辅助和 DSH Go 入口。
 - 返回键先消费 WebView 历史，无历史时退到后台。

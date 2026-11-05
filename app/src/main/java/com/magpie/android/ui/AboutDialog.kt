@@ -54,16 +54,23 @@ internal object AboutDialog {
             themeGroup.addView(RadioButton(context).apply {
                 id = View.generateViewId()
                 textSize = 11f
+                setSingleLine(true)
                 minWidth = 0
                 minHeight = 0
                 setPadding(0, 0, 0, 0)
                 gravity = Gravity.CENTER
-                layoutParams = RadioGroup.LayoutParams(dp(context, 62), dp(context, 44))
+                layoutParams = RadioGroup.LayoutParams(
+                    if (value == ThemePreference.FollowSystem) dp(context, 96) else dp(context, 62),
+                    dp(context, 44),
+                )
                 setText(label)
                 isChecked = value == preference
                 setOnClickListener {
                     onThemeChanged(value)
-                    dialog.dismiss()
+                    val dark = isDarkPreference(context, value)
+                    applyDialogPalette(root, dark)
+                    dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(dialogBackground(dark)))
+                    root.postDelayed({ dialog.dismiss() }, 250)
                 }
             })
         }
