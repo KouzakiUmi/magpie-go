@@ -65,6 +65,10 @@ class MagpieWebContainer(
             "/icons/magpie-smile.png" -> "branding/magpie-smile.png"
             "/icons/favicon.svg" -> "branding/favicon.svg"
             "/plugins/redact/pica_wave.png" -> "branding/pica_wave.png"
+            "/plugins/redact/pica_flight.png" -> "branding/magpie-jump.png"
+            "/plugins/redact/pica-flight-up.png" -> "branding/pica-flight-up.png"
+            "/plugins/redact/pica-flight-down.png" -> "branding/pica-flight-down.png"
+            "/plugins/redact/pica-flight-mid.png" -> "branding/pica-flight-mid.png"
             "/plugins/redact/xq_light.jpg" -> "branding/xq_light.jpg"
             "/plugins/redact/xq_dark.jpg" -> "branding/xq_dark.jpg"
             "/plugins/redact/xq_light.webm" -> "branding/xq_light.webm"
@@ -299,6 +303,12 @@ class MagpieWebContainer(
                 'body{overflow-x:hidden !important;max-width:100vw !important}',
                 '#view-usage,#view-usage .card,#view-usage .list,#view-usage .row,#view-usage .quota{',
                 'min-width:0 !important;max-width:100% !important;box-sizing:border-box !important;overflow-wrap:anywhere !important}',
+                '@keyframes pica-flap-a{0%,33.32%{opacity:1}33.33%,100%{opacity:0}}',
+                '@keyframes pica-flap-b{0%,33.32%{opacity:0}33.33%,66.65%{opacity:1}66.66%,100%{opacity:0}}',
+                '@keyframes pica-flap-c{0%,66.65%{opacity:0}66.66%,100%{opacity:1}}',
+                '.pica-flap-a{animation:pica-flap-a .54s steps(1,end) infinite}',
+                '.pica-flap-b{animation:pica-flap-b .54s steps(1,end) infinite}',
+                '.pica-flap-c{animation:pica-flap-c .54s steps(1,end) infinite}',
                 '.rt-accts{padding-left:0 !important}',
                 '.view-ends{left:8px !important;right:auto !important}',
                 '.auto-backup .val{flex:1 1 auto !important;min-width:0 !important}',
@@ -402,16 +412,63 @@ class MagpieWebContainer(
                   });
                   logo.appendChild(bird);
                 }
+                document.querySelectorAll('svg g.rt-flier').forEach(function (group) {
+                  if (group.dataset.magpiePica) return;
+                  var flight = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  flight.setAttribute('href', '/plugins/redact/pica_flight.png');
+                  flight.setAttribute('class', 'pica-flap-a');
+                  flight.setAttribute('x', '-22');
+                  flight.setAttribute('y', '-22');
+                  flight.setAttribute('width', '44');
+                  flight.setAttribute('height', '44');
+                  flight.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  var wave = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  wave.setAttribute('href', '/plugins/redact/pica_wave.png');
+                  wave.setAttribute('class', 'pica-flap-b');
+                  wave.setAttribute('x', '-22');
+                  wave.setAttribute('y', '-22');
+                  wave.setAttribute('width', '44');
+                  wave.setAttribute('height', '44');
+                  wave.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  var down = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  down.setAttribute('href', '/plugins/redact/pica-flight-down.png');
+                  down.setAttribute('class', 'pica-flap-c');
+                  down.setAttribute('x', '-22');
+                  down.setAttribute('y', '-22');
+                  down.setAttribute('width', '44');
+                  down.setAttribute('height', '44');
+                  down.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  group.replaceChildren(flight, wave, down);
+                  group.dataset.magpiePica = '1';
+                });
                 document.querySelectorAll('svg g.bird').forEach(function (group) {
+                  if (group.dataset.magpiePica) return;
                   var image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-                  image.setAttribute('href', '/plugins/redact/pica_wave.png');
+                  image.setAttribute('href', '/plugins/redact/pica-flight-up.png');
                   image.setAttribute('x', '0');
                   image.setAttribute('y', '0');
                   image.setAttribute('width', '44');
                   image.setAttribute('height', '44');
                   image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-                  image.setAttribute('class', 'bird');
-                  group.replaceWith(image);
+                  image.setAttribute('class', 'pica-flap-a');
+                  var wave = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  wave.setAttribute('href', '/plugins/redact/pica-flight-mid.png');
+                  wave.setAttribute('class', 'pica-flap-b');
+                  wave.setAttribute('x', '-22');
+                  wave.setAttribute('y', '-22');
+                  wave.setAttribute('width', '44');
+                  wave.setAttribute('height', '44');
+                  wave.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  var down = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  down.setAttribute('href', '/plugins/redact/pica-flight-down.png');
+                  down.setAttribute('class', 'pica-flap-c');
+                  down.setAttribute('x', '-22');
+                  down.setAttribute('y', '-22');
+                  down.setAttribute('width', '44');
+                  down.setAttribute('height', '44');
+                  down.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  group.replaceChildren(image, wave, down);
+                  group.dataset.magpiePica = '1';
                 });
                 document.querySelectorAll('svg').forEach(function (svg) {
                   if (svg.closest('.brand .logo') || !svg.querySelector('use[href="#bird"]')) return;
