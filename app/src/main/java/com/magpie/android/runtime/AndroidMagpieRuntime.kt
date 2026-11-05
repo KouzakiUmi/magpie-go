@@ -69,6 +69,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
     private val recent = ArrayDeque<String>()
     private val redactor: LogRedactor = DefaultLogRedactor
     private var process: Process? = null
+    private var processMonitorJob: kotlinx.coroutines.Job? = null
     private var activeConfig: MagpieConfig? = null
     private var validated = false
     @Volatile private var serviceReady: CompletableDeferred<Unit>? = null
@@ -141,7 +142,8 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
      */
     private fun attachToExistingProcess() {
         watchNetwork()
-        scope.launch {
+        processMonitorJob?.cancel()
+        processMonitorJob = scope.launch {
             while (true) {
                 delay(2000)
                 val listening = isPortListening(3430)
@@ -379,7 +381,8 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             )
             systemLog("health_check_ok")
             watchNetwork()
-            scope.launch {
+            processMonitorJob?.cancel()
+            processMonitorJob = scope.launch {
                 val code = child.waitFor()
                 mutex.withLock {
                     if (process === child) {
@@ -600,6 +603,8 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
     }
 
     private suspend fun stopProcess() {
+        processMonitorJob?.cancel()
+        processMonitorJob = null
         unwatchNetwork()
         val pidFile = File(paths.run, "web.pid")
         val child = process
@@ -609,23 +614,34 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             if (parent != null && isOwnedMagpieProcess()) {
                 childPids(parent).forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGTERM) } }
                 runCatching { android.system.Os.kill(parent, android.system.OsConstants.SIGTERM) }
-                waitForPortClosed(3430)
+                if (!waitForPortClosed(3430, 5_000)) {
+                    childPids(parent).forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGKILL) } }
+                    runCatching { android.system.Os.kill(parent, android.system.OsConstants.SIGKILL) }
+                    check(waitForPortClosed(3430)) { "旧进程未在限定时间内停止" }
+                }
                 if (pidFile.exists()) pidFile.delete()
             }
             systemLog("process_stopped")
             return
         }
         terminate(child, pidFile)
-        waitForPortClosed(3430)
+        if (!waitForPortClosed(3430, 5_000)) {
+            val parent = readPid(pidFile)
+            if (parent != null && isOwnedMagpieProcess()) {
+                childPids(parent).forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGKILL) } }
+                runCatching { android.system.Os.kill(parent, android.system.OsConstants.SIGKILL) }
+            }
+            check(waitForPortClosed(3430)) { "旧进程未在限定时间内停止" }
+        }
         if (pidFile.exists()) pidFile.delete()
         process = null
         systemLog("process_stopped")
     }
 
-    private suspend fun waitForPortClosed(port: Int, timeoutMs: Long = 5_000) {
+    private suspend fun waitForPortClosed(port: Int, timeoutMs: Long = 15_000): Boolean {
         val deadline = System.nanoTime() + timeoutMs * 1_000_000
         while (isPortListening(port) && System.nanoTime() < deadline) delay(100)
-        check(!isPortListening(port)) { "旧进程未在限定时间内停止" }
+        return !isPortListening(port)
     }
 
     private fun terminate(child: Process, pidFile: File) {
@@ -635,9 +651,9 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
         val parent = readPid(pidFile)
         val children = parent?.let(::childPids).orEmpty()
         children.forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGTERM) } }
-        if (!child.waitFor(5, TimeUnit.SECONDS)) {
+        if (!child.waitFor(10, TimeUnit.SECONDS)) {
             child.destroy()
-            if (!child.waitFor(3, TimeUnit.SECONDS)) {
+            if (!child.waitFor(5, TimeUnit.SECONDS)) {
                 children.forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGKILL) } }
                 child.destroyForcibly()
                 check(child.waitFor(3, TimeUnit.SECONDS)) { "无法停止运行时进程" }
@@ -794,7 +810,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
 
     private fun safeReason(e: Exception): String = when (e) {
         is IllegalArgumentException -> e.message?.takeIf { it in setOf("仅允许指定的 loopback 地址", "web key 格式不正确", "代理地址无效或不受支持") } ?: "参数无效"
-        is IllegalStateException -> e.message?.takeIf { it in setOf("设备 ABI 不支持或 APK 缺少运行时资产", "内置 magpie SHA256 校验失败", "运行时资产不完整", "无法准备运行时私有目录", "本地端口已被占用", "magpie 进程提前退出", "管理页健康检查超时", "代理命令超时", "代理命令执行失败", "前台服务启动失败") } ?: "运行时错误"
+        is IllegalStateException -> e.message?.takeIf { it in setOf("设备 ABI 不支持或 APK 缺少运行时资产", "内置 magpie SHA256 校验失败", "运行时资产不完整", "无法准备运行时私有目录", "本地端口已被占用", "magpie 进程提前退出", "管理页健康检查超时", "代理命令超时", "代理命令执行失败", "前台服务启动失败", "旧进程未在限定时间内停止") } ?: "运行时错误"
         else -> "运行时异常"
     }
 }

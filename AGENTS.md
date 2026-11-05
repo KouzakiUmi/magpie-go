@@ -32,7 +32,7 @@
 
 `MagpieStatus.pageUrl` 只在内存中传给 WebView，不进入日志、SharedPreferences 或诊断内容。下载任务先移除 `k` 查询参数，再通过 Cookie 认证。顶部只显示网关地址，不显示 web key。
 
-应用显示名统一为 **Magpie Go**，包名保持 `com.magpie.android`。默认文案为简体中文，`values-en` 提供英文。文案直接说明操作与结果，不增加免责声明或重复配置能力。
+应用显示名统一为 **Magpie Go**，包名保持 `com.magpie.android`。默认文案为简体中文，`values-en` 提供英文。文案直接说明操作与结果，不增加免责声明或重复配置能力。首页与主题采用 Open Design `minimalist-ui` 的暖色单色方案，派卡主卡片、细边框、左对齐说明和单色主按钮；不使用渐变、重阴影或大段居中标题。
 
 ## 原创角色与品牌资产
 

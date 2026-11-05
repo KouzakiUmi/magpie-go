@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,13 +18,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -163,7 +174,12 @@ private fun InstallScreen(
         Button(
             onClick = onInstall,
             enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.onBackground,
+                contentColor = MaterialTheme.colorScheme.background,
+            ),
         ) {
             Text(stringResource(R.string.download_button))
         }
@@ -232,7 +248,12 @@ private fun StartScreen(
         Button(
             onClick = onStart,
             enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.onBackground,
+                contentColor = MaterialTheme.colorScheme.background,
+            ),
         ) {
             Text(stringResource(if (isError) R.string.retry_button else R.string.start_button))
         }
@@ -242,14 +263,12 @@ private fun StartScreen(
 @Composable
 private fun LoadingScreen(title: String, body: String) {
     MessageScreen(title = title, body = body) {
-        AnimatedMagpie()
-        Spacer(Modifier.height(8.dp))
         CircularProgressIndicator()
     }
 }
 
 @Composable
-private fun AnimatedMagpie() {
+private fun AnimatedMagpie(size: Dp = 104.dp) {
     val transition = rememberInfiniteTransition(label = "magpie-hop")
     val progress by transition.animateFloat(
         initialValue = 0f,
@@ -297,7 +316,7 @@ private fun AnimatedMagpie() {
         bitmap = bitmap,
         contentDescription = stringResource(R.string.app_name),
         modifier = Modifier
-            .size(180.dp)
+            .size(size)
             .offset(x = x.dp, y = y.dp)
             .graphicsLayer {
                 scaleX = if (time < 1.4f) 1f else -1f
@@ -323,41 +342,81 @@ private fun MessageScreen(
     body: String,
     content: (@Composable () -> Unit)? = null,
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .safeDrawingPadding()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(horizontal = 20.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
+            Row(
                 modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.displaySmall,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 28.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "DSH Go",
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
-                    title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    body,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                content?.let {
-                    Spacer(Modifier.height(4.dp))
-                    it()
+            }
+            Spacer(Modifier.height(28.dp))
+            Surface(
+                modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .35f)),
+                tonalElevation = 0.dp,
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                title,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 26.sp,
+                                lineHeight = 30.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                body,
+                                style = MaterialTheme.typography.bodyLarge,
+                                lineHeight = 22.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        AnimatedMagpie(size = 96.dp)
+                    }
+                    content?.let { it() }
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                stringResource(R.string.home_integration),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.home_footer),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

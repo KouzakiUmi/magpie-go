@@ -80,4 +80,6 @@
     <string name="backup_share_failed">The configuration backup could not be shared. Try again.</string>
     <string name="backup_file_missing">The exported configuration backup could not be found.</string>
     <string name="backup_choose">Choose configuration backup</string>
+    <string name="home_integration">DSH Go · Local models and routing</string>
+    <string name="home_footer">Configuration and sign-in state stay on this device</string>
 </resources>
