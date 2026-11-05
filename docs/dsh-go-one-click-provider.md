@@ -47,6 +47,7 @@ Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 - 同一协议、同一模型保留 compat 和用户设置的 `maxTokens`；协议变化时重新计算。
 - 输出上限按桌面规则为压缩预留空间：至少保留窗口四分之一，或窗口一半减 65536 中的较大者。
 - `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels` / `reasoning_levels`。
+- `auto/...` 路由组别名使用 `owned_by` 转成供应商前缀，按最终 ID 去重；原始元数据和协议信息随模型保留。
 - 只更新 Magpie 三条路由，其他 Provider 不动。
 
 ## 验证

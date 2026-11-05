@@ -306,9 +306,11 @@ class MagpieWebContainer(
                 '.xq-her{left:290px !important;width:440px !important;height:293.33px !important;top:16px !important}',
                 '.xq-her video{object-fit:fill !important;-webkit-mask-image:none !important}',
                 '.md-thumb{background:#e8f1fb url("/icons/mascot-head.png") center / 34px 34px no-repeat !important}',
-                '#connect > div > .segs > .opt{flex:1 1 30% !important;min-width:min-content !important}',
+                '#connect > *:not(.magpie-dsh-connect),#foldModels,#gwModels,#findModel,#copyModels{display:none !important}',
+                'nav button[data-view="agents"],nav button[data-view="sessions"],nav button[data-view="library"],',
+                '#agents,#sessions,#library{display:none !important}',
                 '.magpie-dsh-connect{display:block !important;width:100% !important;',
-                'min-height:44px !important;margin:8px 0 !important;text-align:center !important}',
+                'min-height:44px !important;margin:0 0 8px !important;text-align:center !important}',
 
                 // magpie 的「更新」按钮点了跳 GitHub 发布页，但 App 里的 magpie
                 // 版本是随 APK 打包的，用户在那里更新不了——点了没意义，隐藏掉。
@@ -345,6 +347,15 @@ class MagpieWebContainer(
                 replaceMagpieWord(brand);
                 replaceMagpieWord(document.getElementById('mdRow'));
                 replaceMagpieWord(document.querySelector('.xqd'));
+                ['agents', 'sessions', 'library'].forEach(function (viewName) {
+                  document.querySelector('nav button[data-view="' + viewName + '"]')
+                    ?.style.setProperty('display', 'none', 'important');
+                  document.getElementById(viewName)?.style.setProperty('display', 'none', 'important');
+                });
+                document.querySelectorAll('[id^="codex"],[id^="warm"],[id^="claudeWarm"],'
+                  + '#wslAgentsRow,#sessionTerminalRow,#agentPrefRows,#sessionReadsList,'
+                  + '#usageAgents,#usageAgentsHid,#agentsInstall,#agentsManage,#view-agents,#view-sessions')
+                  .forEach(function (el) { el.style.setProperty('display', 'none', 'important'); });
                 var logo = document.querySelector('.brand .logo');
                 if (logo && !logo.querySelector('.magpie-pixel-logo')) {
                   var bird = document.createElement('img');

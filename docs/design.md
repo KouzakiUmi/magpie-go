@@ -36,7 +36,7 @@
 
 ## 4. DSH Go 一键 Provider
 
-Magpie Go 只发起 `dshgo://providers/magpie`。DSH Go 显示确认框，然后由自己的 Provider/ConfigEditor 写入 web profile 的 `cordis.patch.yml`，不跨应用直接读写文件。
+Magpie Go 只发起 `dshgo://providers/magpie`。入口位于网关页顶部；通用 API 示例、模型列表和桌面 CLI 集成功能不在 Android 管理页展示。Agents、会话检测、资源库、Codex/CLI 预热及相关设置入口已移除，因为它们不适用于当前 DSH Go 适配范围。DSH Go 显示确认框，然后由自己的 Provider/ConfigEditor 写入 web profile 的 `cordis.patch.yml`，不跨应用直接读写文件。
 
 | 路由 | 协议 | Base URL |
 |---|---|---|
