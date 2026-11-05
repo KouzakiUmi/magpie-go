@@ -42,12 +42,6 @@
 - Sources: <https://curl.se/docs/caextract.html> and <https://raw.githubusercontent.com/mozilla-firefox/firefox/refs/heads/release/security/nss/lib/ckfw/builtins/certdata.txt>.
 - License: [`third_party/ca-certificates/COPYING`](third_party/ca-certificates/COPYING). This is public certificate data, not an application private key.
 
-## Optional Bun runtime
-
-- Project: [`oven-sh/bun`](https://github.com/oven-sh/bun)
-- License: [MIT](https://github.com/oven-sh/bun/blob/main/LICENSE.md)
-- Source: official Android binary release. The binary is not committed to this repository; `tooling/download-bun.py` restores it with a pinned version and archive hash.
-
 ## Android and development libraries
 
 - AndroidX, Jetpack Compose, Kotlin, Kotlin coroutines, Android Gradle Plugin and Gradle wrapper: [Apache-2.0](third_party/android-libraries/LICENSE-2.0.txt).

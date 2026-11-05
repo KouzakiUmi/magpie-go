@@ -361,8 +361,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MagpieWebContainer.REQUEST_BACKUP_FILE) {
+            if (resultCode == RESULT_OK && data?.data == null && data?.clipData == null) {
+                toast(R.string.backup_import_invalid)
+                contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)
+                    ?.handleFileChooserResult(RESULT_CANCELED, null)
+                return
+            }
+            val uris = buildList {
+                data?.data?.let { add(it) }
+                data?.clipData?.let { clips -> repeat(clips.itemCount) { i -> add(clips.getItemAt(i).uri) } }
+            }.mapNotNull { BackupImport.prepare(this, it) }.toTypedArray()
+            if (resultCode == RESULT_OK && uris.isEmpty()) toast(R.string.backup_import_invalid)
             contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)
-                ?.handleFileChooserResult(resultCode, data)
+                ?.handleFileChooserResult(if (uris.isEmpty()) RESULT_CANCELED else resultCode, data, uris)
             return
         }
         @Suppress("DEPRECATION")

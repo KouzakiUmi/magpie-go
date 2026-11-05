@@ -38,16 +38,6 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### 可选 Bun 插件运行时
-
-基础网关不需要 Bun。第三方 Magpie 插件需要 Android 版 Bun；由于发行文件超过 GitHub 单文件限制，仓库不包含该二进制。需要时从官方 Bun release 恢复：
-
-```bash
-python tooling/download-bun.py
-```
-
-脚本固定 Bun 版本、官方地址和 ZIP SHA-256，不会执行下载的二进制。
-
 ## 许可与角色素材
 
 - 项目代码：[CC BY-NC 4.0](LICENSE)。

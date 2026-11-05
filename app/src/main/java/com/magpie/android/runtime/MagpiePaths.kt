@@ -16,19 +16,6 @@ class MagpiePaths(context: Context) {
     val bundledTalloc = File(binDir, "libtalloc.so")
     val shmem = File(binDir, "libandroid-shmem.so")
 
-    /**
-     * Bun 的 Android 构建，插件靠它运行。
-     *
-     * 为什么需要单独提供：magpie 默认下载 `bun-linux-aarch64`，那是 glibc 版，
-     * Android 用的是 bionic，执行时报 "no such file or directory"。Bun 官方另有
-     * `bun-linux-aarch64-android` 构建（ELF 的 interpreter 指向 /system/bin/linker64），
-     * 通过 `MAGPIE_BUN` 环境变量指过去就能跑。
-     *
-     * 为什么在私有目录而不是 nativeLibraryDir：它随包放在 assets 里（可压缩，
-     * APK 少约 60 MB），首次使用时解压到这里并赋执行位。
-     */
-    val bun = File(root, "bin/bun")
-
     val lib = File(root, "lib")
     val talloc = File(lib, "libtalloc.so.2")
     val run = File(root, "run")

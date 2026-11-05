@@ -73,6 +73,7 @@ class ProxySettingsDialog(
 
     /** 最近一次检测的结论；null 表示还没检测或目标已改。 */
     private var lastOutcome: Reachability? = null
+    private var detectionSerial = 0L
     private var running: Job? = null
 
     fun show() {
@@ -149,6 +150,18 @@ class ProxySettingsDialog(
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setSingleLine(true)
         }
+        val inputWatcher = object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: android.text.Editable?) {
+                detectionSerial++
+                running?.cancel()
+                lastOutcome = null
+                applyButton.isEnabled = false
+            }
+        }
+        targetInput.addTextChangedListener(inputWatcher)
+        proxyInput.addTextChangedListener(inputWatcher)
         root.addView(proxyInput, matchWidth())
 
         progress = ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
@@ -219,7 +232,9 @@ class ProxySettingsDialog(
                 targetPicker.visibility = View.GONE
                 return@launch
             }
-            providerTargets = hosts.map { "https://$it" }
+            providerTargets = hosts.map { host ->
+                if (host.startsWith("http://") || host.startsWith("https://")) host else "https://$host"
+            }
             targetPicker.adapter = android.widget.ArrayAdapter(
                 context,
                 android.R.layout.simple_spinner_dropdown_item,
@@ -258,6 +273,7 @@ class ProxySettingsDialog(
             return
         }
 
+        val serial = ++detectionSerial
         running?.cancel()
         setBusy(true)
         resultView.text = ""
@@ -268,6 +284,7 @@ class ProxySettingsDialog(
             val outcome = withContext(Dispatchers.IO) {
                 runCatching { controller.probe(target, PROBE_TIMEOUT_MS, candidate) }.getOrNull()
             }
+            if (serial != detectionSerial) return@launch
             setBusy(false)
             if (outcome == null) {
                 resultView.setText(R.string.proxy_detect_failed)
@@ -338,6 +355,9 @@ class ProxySettingsDialog(
         progress.visibility = if (busy) View.VISIBLE else View.GONE
         detectButton.isEnabled = !busy
         clearButton.isEnabled = !busy
+        targetInput.isEnabled = !busy
+        proxyInput.isEnabled = !busy
+        targetPicker.isEnabled = !busy
         if (busy) applyButton.isEnabled = false
     }
 

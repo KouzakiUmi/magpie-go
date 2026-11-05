@@ -135,11 +135,5 @@ Windows 的 Git Bash 会把 `/data/local/tmp/...` 当本机路径，`adb push` �
 
 ## 已知限制
 
-- **插件系统可用**（实测通过）：内置 14 个插件默认 `active`；第三方插件需要 Android 版 Bun。
-  magpie 默认下载的是 `bun-linux-aarch64`（glibc），Android 是 bionic，跑不起来。解法是把
-  `MAGPIE_BUN` 指向 **Bun 官方的 Android 构建** `bun-linux-aarch64-android`（资产名
-  `bun-linux-aarch64-android.zip`，其 ELF 的 interpreter 是 `/system/bin/linker64`）。
-  实测 `plugin add calc` 成功，装上 `@magpie-community/tools-calc`，注册
-  `calc_convert` / `calc_date` / `calc_eval` 三个工具，`tools` 插件 `inUse: 1`。
-  注意 Bun 必须放在 App 私有目录（`/data/local/tmp` 在 PRoot 内 permission denied）。
+- **不提供插件页面或宿主插件运行时**：不解压或注入 Bun，不展示插件、会话检测和资源库入口；Magpie 核心供应商、路由、网关和备份功能保留。
 - **只支持 arm64 真机**：`jniLibs/arm64-v8a` 是唯一当前目标，x86_64 模拟器是后续工作。

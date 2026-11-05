@@ -80,6 +80,8 @@
     <string name="backup_share_failed">无法分享配置备份，请重试。</string>
     <string name="backup_file_missing">没有找到刚导出的配置备份。</string>
     <string name="backup_choose">选择配置备份</string>
+    <string name="backup_import_invalid">请选择 .magpie-backup 配置备份文件。</string>
     <string name="home_integration">DSH Go · 本机模型与路由</string>
     <string name="home_footer">配置和登录状态保留在此设备</string>
+    <string name="models_changed">列表发生改变，请重新导入更新</string>
 </resources>

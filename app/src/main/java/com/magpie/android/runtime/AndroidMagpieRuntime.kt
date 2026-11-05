@@ -38,14 +38,13 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
-internal class ProxyRestartException : IllegalStateException("代理已写入，但进程重启失败")
+internal class ProxyRestartException(reason: String) : IllegalStateException("代理已写入，但进程重启失败：$reason")
 
 /** Single in-process owner of the packaged magpie process and its foreground service. */
 class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime {
     companion object {
         private const val VERSION = "0.1.2993"
         private const val MAGPIE_SHA256 = "f871152ff473bab587f62c99400c0d04c04de25cb8c43304e0aa185f4cd0df81"
-        private const val ASSET_BUN = "runtime/bun-arm64"
         private const val BASE_URL = "http://127.0.0.1:3430"
         private const val GATEWAY_URL = "http://127.0.0.1:3425"
         @Volatile private var instance: AndroidMagpieRuntime? = null
@@ -134,6 +133,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
         )
         // 接回存活进程的输出与退出监听，否则界面拿不到后续日志与退出事件
         attachToExistingProcess()
+        scope.launch { startService() }
     }
 
     /**
@@ -159,33 +159,6 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                     return@launch
                 }
             }
-        }
-    }
-
-    /**
-     * 把随包的 Bun（assets 里压缩存放）解到私有目录并赋执行位。
-     *
-     * 为什么不在 jniLibs：`useLegacyPackaging` 为了保住可执行位必须不压缩，
-     * 107 MB 会原样进包；放 assets 能压缩到约 47 MB。代价是首次解压一次。
-     *
-     * 解压失败不抛：网关本身不依赖 Bun，缺了只是第三方插件不能用。
-     */
-    private fun extractBun() {
-        try {
-            val target = paths.bun
-            val expected = runCatching {
-                app.assets.openFd(ASSET_BUN).use { it.length }
-            }.getOrNull()
-            if (target.isFile && expected != null && target.length() == expected) return
-            target.parentFile?.let { if (!it.isDirectory) check(it.mkdirs()) { "无法准备插件运行时目录" } }
-            app.assets.open(ASSET_BUN, android.content.res.AssetManager.ACCESS_STREAMING).use { input ->
-                target.outputStream().use { output -> input.copyTo(output, 1 shl 16) }
-            }
-            check(target.length() > 0) { "插件运行时解压失败" }
-            check(target.setExecutable(true)) { "无法设置插件运行时执行权限" }
-            systemLog("bun_extracted")
-        } catch (e: Exception) {
-            systemLog("bun_unavailable")
         }
     }
 
@@ -231,8 +204,6 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             listOf(paths.proot, paths.loader, paths.magpie, paths.bundledTalloc, paths.shmem).forEach {
                 check(it.isFile && it.length() > 0) { "设备 ABI 不支持或 APK 缺少运行时资产" }
             }
-            // Bun 缺失不阻断启动：网关本身不需要它，只是没装插件的用户会少一项功能。
-            if (!paths.bun.isFile) systemLog("bun_missing_plugins_disabled")
             check(sha256(paths.magpie) == MAGPIE_SHA256) { "内置 magpie SHA256 校验失败" }
             // Keep native code in the read-only APK extraction directory: app-data code
             // mappings may be blocked on Android 10+. Only the compatibility name is writable.
@@ -244,7 +215,6 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             android.system.Os.symlink(paths.bundledTalloc.absolutePath, paths.talloc.absolutePath)
             app.assets.open("ca-certificates.crt").use { input -> paths.ca.outputStream().use(input::copyTo) }
             check(paths.ca.length() > 0 && paths.talloc.length() > 0) { "运行时资产不完整" }
-            extractBun()
             validated = true
             update(MagpiePhase.Stopped)
             systemLog("runtime_assets_verified")
@@ -350,7 +320,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
     }
 
     private suspend fun startProcess(config: MagpieConfig) {
-        check(isPortFree(3430) && isPortFree(3425)) { "本地端口已被占用" }
+        waitForPortsFree(3430, 3425)
         prepareDns()
         update(MagpiePhase.Starting)
         systemLog("process_start_requested")
@@ -362,7 +332,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
         captureLines(child.inputStream, LogStream.Stdout)
         captureLines(child.errorStream, LogStream.Stderr)
         try {
-            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30)
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45)
             var healthy = false
             while (System.nanoTime() < deadline) {
                 check(child.isAlive) { "magpie 进程提前退出" }
@@ -428,7 +398,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                 prepareDns()
                 val previous = activeConfig
                 runCli(listOf("settings", "set", "proxy", value), capture = false)
-                if (previous != null && process?.isAlive == true) {
+                if (previous != null && (process?.isAlive == true || isOwnedMagpieProcess())) {
                     restarting = true
                     update(MagpiePhase.Stopping)
                     stopProcess()
@@ -446,9 +416,10 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             } catch (e: Exception) {
                 if (restarting) {
                     activeConfig = null
-                    fail("代理设置后重启失败")
+                    systemLog("proxy_restart_reason ${safeReason(e)}")
+                    fail("代理设置后重启失败：${safeReason(e)}")
                     if (process == null || process?.isAlive == false) stopService()
-                    Result.failure(ProxyRestartException())
+                    Result.failure(ProxyRestartException(safeReason(e)))
                 } else {
                     Result.failure(IllegalStateException("代理设置失败：${safeReason(e)}"))
                 }
@@ -491,10 +462,10 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
             .mapNotNull { line ->
                 val trimmed = line.trim()
                 if (trimmed.isEmpty() || !line.startsWith(" ")) return@mapNotNull null
-                // 列之间是连续空白；第 3 列是 host
-                trimmed.split(Regex("""\s{2,}"""))
-                    .getOrNull(2)
-                    ?.takeIf { it.contains('.') || it.contains(':') }
+                // 列之间是连续空白；兼容完整 URL 与第 3 列 host 两种格式
+                val columns = trimmed.split(Regex("""\s{2,}"""))
+                columns.firstOrNull { it.startsWith("http://") || it.startsWith("https://") }
+                    ?: columns.getOrNull(2)?.takeIf { it.contains('.') || it.contains(':') }
             }
             .distinct()
             .toList()
@@ -558,7 +529,6 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                     put("no_proxy", "localhost,127.0.0.1,::1")
                     // 插件跑在 Bun 上。magpie 默认会下载 glibc 版 Bun，Android 用的是
                     // bionic，那份执行不了；这里指向随包提供的 Android 构建。
-                    if (paths.bun.isFile) put("MAGPIE_BUN", paths.bun.absolutePath)
                     remove("MAGPIE_WEB_KEY")
                     webKey?.let { put("MAGPIE_WEB_KEY", it) }
                 }
@@ -617,7 +587,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                 if (!waitForPortClosed(3430, 5_000)) {
                     childPids(parent).forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGKILL) } }
                     runCatching { android.system.Os.kill(parent, android.system.OsConstants.SIGKILL) }
-                    check(waitForPortClosed(3430)) { "旧进程未在限定时间内停止" }
+                    check(waitForPortClosed(3430) || readPid(pidFile) == null) { "旧进程未在限定时间内停止" }
                 }
                 if (pidFile.exists()) pidFile.delete()
             }
@@ -631,7 +601,7 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                 childPids(parent).forEach { runCatching { android.system.Os.kill(it, android.system.OsConstants.SIGKILL) } }
                 runCatching { android.system.Os.kill(parent, android.system.OsConstants.SIGKILL) }
             }
-            check(waitForPortClosed(3430)) { "旧进程未在限定时间内停止" }
+            check(waitForPortClosed(3430) || readPid(pidFile) == null) { "旧进程未在限定时间内停止" }
         }
         if (pidFile.exists()) pidFile.delete()
         process = null
@@ -642,6 +612,12 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
         val deadline = System.nanoTime() + timeoutMs * 1_000_000
         while (isPortListening(port) && System.nanoTime() < deadline) delay(100)
         return !isPortListening(port)
+    }
+
+    private suspend fun waitForPortsFree(vararg ports: Int, timeoutMs: Long = 15_000) {
+        val deadline = System.nanoTime() + timeoutMs * 1_000_000
+        while (ports.any { !isPortFree(it) } && System.nanoTime() < deadline) delay(100)
+        check(ports.all { isPortFree(it) }) { "本地端口已被占用" }
     }
 
     private fun terminate(child: Process, pidFile: File) {

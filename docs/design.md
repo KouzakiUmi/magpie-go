@@ -17,7 +17,7 @@
 - 可执行文件通过 `useLegacyPackaging = true` 解压到 `nativeLibraryDir`，不依赖 root。
 - 运行时文件位于 App 私有 `files/runtime/`，可随更新整体覆写；用户配置、登录态、模型缓存和备份位于独立的 `files/magpie/`，升级时保留。`keepData` 重置只清理运行时，完整重置才同时清理数据。
 - 配置使用 `XDG_CONFIG_HOME` / `XDG_CACHE_HOME` 重定向到 App 私有目录，不使用 `.portable`。
-- 第三方 Magpie 插件使用 Android 版 Bun。Bun 不随仓库分发，`tooling/download-bun.py` 按固定版本和哈希恢复。
+- 不提供插件页面或 Bun 插件运行时；插件、会话检测和资源库入口从 Android 管理页移除。
 
 ### 进程生命周期
 

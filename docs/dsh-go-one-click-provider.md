@@ -56,3 +56,11 @@ Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 - DSH Go：三协议分组、compat 与输出上限保留、思考档位、深链接校验、`ProviderProfile` 超时字段往返。
 - 真机：确认框 → 三协议 Provider 出现 → 重复接入不重复 → 模型可选 → 重启后配置仍可读。
 - 当前 Magpie `/v1/models` 实测返回 70 个模型，Responses 与 Messages 的 `native_endpoints` 已用于分组验证。
+
+## 导入方式与同步
+
+- 按 API 导入使用 `magpie`、`magpie-responses`、`magpie-anthropic` 三条协议路由。
+- 按 Provider 导入使用 `magpie-group`、`magpie-group-responses`、`magpie-group-anthropic`，作为 Magpie Group 分组名称；当前 DSH 的 `api` 仍是 Provider 级配置，不能混在一个协议 Provider 中。
+- `auto/...` 别名按 `owned_by` 转为供应商前缀，模型 displayName 也带供应商，便于在 DSH Go 中辨认。
+- 只允许本机引擎接入；更新每条路由前重新读取该路由和 revision，创建也带 revision，避免覆盖并发修改。
+- 手机端每分钟比较模型列表指纹；变化时通知“列表发生改变，请重新导入更新”，不自动覆盖现有配置。

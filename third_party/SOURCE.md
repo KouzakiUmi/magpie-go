@@ -54,4 +54,4 @@
 ## 不随仓库分发的组件
 
 - `assets/proot/` 中的旧 x86_64 PRoot 副本不进入发布仓库；当前目标为 ARM64。
-- Bun 不进入发布仓库。需要时由 `tooling/download-bun.py` 从官方 release 恢复，版本和压缩包哈希固定。
+- 不提供插件页面或 Bun 插件运行时，因此不需要额外的插件组件。

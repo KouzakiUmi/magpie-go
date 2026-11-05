@@ -12,6 +12,18 @@ import androidx.core.app.NotificationCompat
 import com.magpie.android.R
 import com.magpie.android.data.PowerSettings
 import com.magpie.android.ui.MainActivity
+import java.net.HttpURLConnection
+import java.net.Proxy
+import java.net.URL
+import java.security.MessageDigest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import org.json.JSONArray
 
 /**
  * 让进程保持前台，并给用户一个能看到、能操作的常驻通知。
@@ -24,6 +36,8 @@ import com.magpie.android.ui.MainActivity
  */
 class MagpieService : Service() {
     private var foregroundReady = false
+    private val modelWatchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var modelFingerprint: String? = null
 
     companion object {
         private const val CHANNEL_ID = "magpie_runtime"
@@ -44,6 +58,7 @@ class MagpieService : Service() {
             )
             startForeground(NOTIFICATION_ID, buildNotification())
             foregroundReady = true
+            startModelWatch()
             AndroidMagpieRuntime.getInstance(applicationContext).onServiceReady(this)
         } catch (error: Exception) {
             android.util.Log.e("MagpieService", "foreground start failed: ${error.javaClass.simpleName}: ${error.message}")
@@ -52,7 +67,9 @@ class MagpieService : Service() {
         }
     }
 
-    private fun buildNotification(): android.app.Notification {
+    private fun buildNotification(): android.app.Notification = notificationBuilder().build()
+
+    private fun notificationBuilder(): NotificationCompat.Builder {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome_art)
             .setContentTitle(getString(R.string.app_name))
@@ -69,8 +86,71 @@ class MagpieService : Service() {
                 powerSettingsIntent(),
             )
         }
-        return builder.build()
+        return builder
     }
+
+    private fun startModelWatch() {
+        modelWatchScope.launch {
+            while (isActive) {
+                val fingerprint = fetchModelFingerprint()
+                if (fingerprint != null) {
+                    val previous = modelFingerprint
+                    modelFingerprint = fingerprint
+                    if (previous != null && previous != fingerprint) notifyModelListChanged()
+                }
+                delay(60_000)
+            }
+        }
+    }
+
+    private fun notifyModelListChanged() {
+        if (!foregroundReady) return
+        runCatching {
+            getSystemService(NotificationManager::class.java).notify(
+                NOTIFICATION_ID,
+                notificationBuilder().setContentText(getString(R.string.models_changed)).build(),
+            )
+        }
+    }
+
+    private fun fetchModelFingerprint(): String? = runCatching {
+        val connection = URL("http://127.0.0.1:3425/v1/models").openConnection(Proxy.NO_PROXY) as HttpURLConnection
+        try {
+            connection.connectTimeout = 4_000
+            connection.readTimeout = 4_000
+            connection.setRequestProperty("Authorization", "Bearer magpie")
+            if (connection.responseCode != 200) return null
+            val body = connection.inputStream.bufferedReader().use { reader ->
+                val text = StringBuilder()
+                val buffer = CharArray(8192)
+                while (true) {
+                    val count = reader.read(buffer)
+                    if (count < 0) break
+                    if (text.length + count > 4 * 1024 * 1024) return null
+                    text.append(buffer, 0, count)
+                }
+                text.toString()
+            }
+            val items = JSONArray(body)
+            val identities = ArrayList<String>(items.length())
+            for (index in 0 until items.length()) {
+                val model = items.getJSONObject(index)
+                identities += listOf(
+                    model.optString("id"),
+                    model.optString("owned_by"),
+                    model.optJSONArray("native_endpoints")?.toString() ?: "",
+                    model.optJSONObject("modalities")?.toString() ?: "",
+                    model.optJSONArray("supported_reasoning_levels")?.toString() ?: "",
+                ).joinToString("|")
+            }
+            identities.sort()
+            MessageDigest.getInstance("SHA-256").digest(identities.joinToString("\n").toByteArray()).joinToString("") {
+                "%02x".format(it.toInt() and 0xff)
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }.getOrNull()
 
     private fun openAppIntent(): PendingIntent = PendingIntent.getActivity(
         this,
@@ -107,6 +187,7 @@ class MagpieService : Service() {
     }
 
     override fun onDestroy() {
+        modelWatchScope.cancel()
         AndroidMagpieRuntime.getInstance(applicationContext).onServiceDestroyed(this)
         super.onDestroy()
     }

@@ -112,11 +112,15 @@ class MagpieWebContainer(
     private val errorView: TextView?
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
-    fun handleFileChooserResult(resultCode: Int, data: Intent?) {
+    fun handleFileChooserResult(resultCode: Int, data: Intent?, preparedUris: Array<Uri>? = null) {
         val callback = filePathCallback ?: return
         filePathCallback = null
         if (resultCode != Activity.RESULT_OK || data == null) {
             callback.onReceiveValue(null)
+            return
+        }
+        if (preparedUris != null) {
+            callback.onReceiveValue(preparedUris)
             return
         }
         val files = mutableListOf<Uri>()
@@ -167,9 +171,14 @@ class MagpieWebContainer(
 
     fun goBack() = webView?.goBack()
 
+    private var destroyed = false
+
     override fun onDetachedFromWindow() {
-        // 不 destroy：离开界面再回来要保留登录态与滚动位置。
-        // destroy 由进程退出时回收。
+        // 后台保留同一容器；停止/重启/错误移除时释放原生页面和轮询资源。
+        if (!destroyed) {
+            destroyed = true
+            webView?.destroy()
+        }
         super.onDetachedFromWindow()
     }
 
@@ -282,14 +291,17 @@ class MagpieWebContainer(
                 // padding-left: 22px 没有被 magpie 重置（它已设 list-style: none，
                 // 并不需要留序号位置），整栏因此比上方的卡片右移 22px，看起来是歪的。
                 // 清掉后与卡片左边缘齐平，栏宽 282 → 304。
+                'body{overflow-x:hidden !important;max-width:100vw !important}',
+                '#view-usage,#view-usage .card,#view-usage .list,#view-usage .row,#view-usage .quota{',
+                'min-width:0 !important;max-width:100% !important;box-sizing:border-box !important;overflow-wrap:anywhere !important}',
                 '.rt-accts{padding-left:0 !important}',
                 '.view-ends{left:8px !important;right:auto !important}',
                 '.auto-backup .val{flex:1 1 auto !important;min-width:0 !important}',
-                '.auto-backup .val .segs{display:flex !important;flex-wrap:wrap !important;',
+                '.auto-backup .val .segs{display:flex !important;flex-wrap:nowrap !important;',
                 'width:100% !important;max-width:100% !important;box-sizing:border-box !important;',
                 'column-gap:4px !important;row-gap:6px !important}',
                 '.auto-backup .val .segs > *:not(.thumb){flex:1 1 18% !important;',
-                'min-width:min-content !important;white-space:normal !important;text-align:center !important}',
+                'min-width:0 !important;white-space:nowrap !important;text-align:center !important;font-size:12px !important}',
                 '.update-wrap,.update-pill-row,.update-auto-row,.update-every-row,',
                 '.update-download-row,.update-restart-row{display:none !important}',
                 // Local portrait, bird silhouette and demo videos. No UI rewrite.
@@ -348,10 +360,13 @@ class MagpieWebContainer(
                 replaceMagpieWord(brand);
                 replaceMagpieWord(document.getElementById('mdRow'));
                 replaceMagpieWord(document.querySelector('.xqd'));
-                ['agents', 'sessions', 'library'].forEach(function (viewName) {
+                ['agents', 'sessions', 'library', 'plugins'].forEach(function (viewName) {
                   document.querySelector('nav button[data-view="' + viewName + '"]')
                     ?.style.setProperty('display', 'none', 'important');
                   document.getElementById(viewName)?.style.setProperty('display', 'none', 'important');
+                });
+                document.querySelectorAll('#view-usage button').forEach(function (button) {
+                  if (button.textContent.trim() === '会话') button.style.setProperty('display', 'none', 'important');
                 });
                 document.querySelectorAll('[id^="codex"],[id^="warm"],[id^="claudeWarm"],'
                   + '#wslAgentsRow,#sessionTerminalRow,#agentPrefRows,#sessionReadsList,'
@@ -410,14 +425,16 @@ class MagpieWebContainer(
               var installBackupSharing = function () {
                 document.querySelectorAll('.sync-form .done').forEach(function (done) {
                   if (done.dataset.magpieBackupBound) return;
-                  var match = /^(?:Saved to|已保存到|已保存至|保存到|保存至)\s*(.+)$/i.exec(done.textContent.trim());
-                  if (!match) return;
+                  var text = done.textContent.trim();
+                  var match = /^(?:Saved to|已保存到|已保存至|已儲存到|Gespeichert unter)\s*(.+)$/i.exec(text);
+                  var path = match ? match[1].trim() : (text.endsWith(' に保存しました') ? text.slice(0, -' に保存しました'.length).trim() : null);
+                  if (!path) return;
                   done.dataset.magpieBackupBound = '1';
                   var button = document.createElement('button');
                   button.type = 'button';
                   button.className = 'text primary';
                   button.textContent = document.documentElement.lang.startsWith('zh') ? '分享导出文件' : 'Share backup';
-                  button.onclick = function () { window.MagpieGoBackup.shareBackup(match[1].trim()); };
+                  button.onclick = function () { window.MagpieGoBackup.shareBackup(path); };
                   done.appendChild(button);
                 });
               };

@@ -145,7 +145,7 @@ class DefaultAutoProxyController(
                 val requestTarget = if (proxy?.type == Proxy.Type.HTTP && !target.tls) "http://${authority(target)}${target.path}" else target.path
                 writeAscii(connection, "HEAD $requestTarget HTTP/1.1\r\nHost: ${authority(target)}\r\nConnection: close\r\n\r\n")
                 val status = readStatus(connection)
-                if (status !in 100..599) return null
+                if (status !in 100..499 || status == 407) return null
                 // For a plain HTTP request these responses may come from the proxy itself,
                 // so they do not establish that the destination is reachable.
                 if (proxy?.type == Proxy.Type.HTTP && !target.tls && status in setOf(407, 502, 503, 504)) return null
@@ -176,9 +176,16 @@ class DefaultAutoProxyController(
     }
 
     private fun readStatus(socket: Socket): Int {
-        val parts = readLine(socket).split(' ')
-        if (parts.size < 2 || !parts[0].startsWith("HTTP/")) throw IOException("invalid response")
-        return parts[1].toIntOrNull() ?: throw IOException("invalid response")
+        var interim = 0
+        while (true) {
+            val parts = readLine(socket).split(' ')
+            if (parts.size < 2 || !parts[0].startsWith("HTTP/")) throw IOException("invalid response")
+            val status = parts[1].toIntOrNull() ?: throw IOException("invalid response")
+            if (status == 101) throw IOException("unexpected protocol switch")
+            if (status != 100) return status
+            if (++interim > 3) throw IOException("too many interim responses")
+            skipHeaders(socket)
+        }
     }
 
     private fun skipHeaders(socket: Socket) {

@@ -5,4 +5,5 @@
 -->
 <paths>
     <cache-path name="diagnostics" path="diagnostics/" />
+    <cache-path name="imports" path="imports/" />
 </paths>

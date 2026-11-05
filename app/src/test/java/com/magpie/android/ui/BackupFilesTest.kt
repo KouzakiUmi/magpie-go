@@ -15,7 +15,7 @@ class BackupFilesTest {
     fun `resolves export in private home`() {
         val home = temporary.newFolder("home")
         val expected = File(home, "magpie-2026-11-05.magpie-backup").apply { writeText("test") }
-        assertEquals(expected, resolveBackupExport(home, "~/magpie-2026-11-05.magpie-backup"))
+        assertEquals(expected.canonicalFile, resolveBackupExport(home, "~/magpie-2026-11-05.magpie-backup"))
     }
 
     @Test
@@ -25,7 +25,26 @@ class BackupFilesTest {
             parentFile.mkdirs()
             writeText("test")
         }
-        assertEquals(expected, resolveBackupExport(home, expected.absolutePath))
+        assertEquals(expected.canonicalFile, resolveBackupExport(home, expected.absolutePath))
+    }
+
+    @Test
+    fun `prefers Downloads when both locations contain same basename`() {
+        val home = temporary.newFolder("home")
+        File(home, "magpie-2026-11-05-1.magpie-backup").writeText("old")
+        val expected = File(home, "Downloads/magpie-2026-11-05-1.magpie-backup").apply {
+            parentFile.mkdirs()
+            writeText("new")
+        }
+        assertEquals(expected.canonicalFile, resolveBackupExport(home, expected.absolutePath))
+    }
+
+    @Test
+    fun `does not fall back to stale home when Downloads exists`() {
+        val home = temporary.newFolder("home")
+        File(home, "magpie-2026-11-05-1.magpie-backup").writeText("old")
+        File(home, "Downloads").mkdirs()
+        assertNull(resolveBackupExport(home, "~/Downloads/magpie-2026-11-05-1.magpie-backup"))
     }
 
     @Test
