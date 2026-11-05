@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  magpie 的管理页与网关都只在 loopback，且是明文 http。
+  只给 127.0.0.1 与 localhost 放行明文；其余域名保持 HTTPS-only。
+  与 dsh-Go 的处理一致（app/android/app/src/main/res/xml/network_security_config.xml）。
+
+  注意：这里放行的是 "App 自己访问 loopback"，不影响 magpie 进程本身——
+  它跑在 PRoot 里，不受 Android 的 networkSecurityConfig 约束。
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

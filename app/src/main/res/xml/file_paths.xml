@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  只暴露缓存目录下的 diagnostics 子目录，且仅用于分享诊断文件。
+  不要把整个 cacheDir 或 filesDir 暴露出去。
+-->
+<paths>
+    <cache-path name="diagnostics" path="diagnostics/" />
+</paths>

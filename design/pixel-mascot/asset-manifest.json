@@ -1,0 +1,18 @@
+{
+  "character_status": "turnaround approved by user",
+  "turnaround_sha256": "9fee94d4fe854f8503ea2217d2833191fd558f5fe843d49841fd97b69d6723c6",
+  "pixel_style_reference_sha256": "cfc64bb5acd216adf0e39775df065102d847efb7cea865f3cfcb481ca2750b10",
+  "inputs": {
+    "kxyai-02fb0b12.png": "b0d9cf87031b7c25153405ba15970d8402b21bd9c8839da8bd575e9f3ea92f26"
+  },
+  "outputs": {
+    "apple-touch-icon.png": "5224894f5a42642a8eec9e529d3142cd358b321d335d34e9baae2383c23a0976",
+    "favicon.svg": "ddf46e0ba6806bce3f9ae396fc63a7bf9e58d68f9ec1f3b8cc3062d447d31728",
+    "mascot-head.png": "a34e02f3b6a36b28db1d611df295583da1e224d87d2fec38353ae5a2524d27e8",
+    "mascot.png": "5224894f5a42642a8eec9e529d3142cd358b321d335d34e9baae2383c23a0976",
+    "xq_dark.jpg": "ba26d14eeda954e24d8c61e6556c368f7fb48f34208093627ae07e91972604a2",
+    "xq_dark.webm": "01a449b9ed94a05c01fc267384352c289bff832f426401707febad2e1831bea7",
+    "xq_light.jpg": "cc4e2e80717b80bc4f84a8c5440595382bddd816c07b95a25db15836b80a6d9f",
+    "xq_light.webm": "3ad48211b5e4ff520ee696f03fec3729bf83f37fd2724aa482c1b5fea5f25ee8"
+  }
+}

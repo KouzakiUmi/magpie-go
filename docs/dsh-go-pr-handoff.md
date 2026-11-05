@@ -1,0 +1,26 @@
+# DSH Go 接收端 PR 交接
+
+DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接收端改动当作 Magpie Go 的内部实现。以下改动保存在本机 dsh-Go 工作区的 `feat/magpie-provider` 分支，提交为：
+
+`a29d207b685c975e93b117ffa9490f78e2ccde5d`
+
+提交具有本地 SSH 签名；尚未推送或创建 PR。
+
+## 文件
+
+- `app/lib/links/magpie_links.dart`：确认框、三条 Provider 的创建/更新、逐条 revision、凭据保存和验证。
+- `app/lib/state/magpie_models.dart`：模型元数据读取、协议分组、思考档位、compat 与输出上限保留。
+- `app/lib/links/app_links.dart`：注册 `dshgo://providers/magpie`。
+- `packages/dsh_client/lib/src/providers_api.dart`：保留 `streamIdleTimeoutMs`。
+- `app/lib/l10n/parts/view_en.arb`、`view_zh.arb` 及生成文案。
+- 对应模型与序列化测试。
+
+## 验证
+
+- `flutter analyze` 通过。
+- `flutter test test/providers/magpie_models_test.dart` 通过。
+- `dart test test/provider_stream_idle_test.dart` 通过。
+- 真机确认后生成 Magpie / Responses / Anthropic 三条路由，重复接入不重复创建。
+- `packages/dsh_client` 全量测试另有一项既有 heartbeat 失败，未计为全量通过。
+
+PR 中应说明：Android 应用之间不能直接读取彼此私有文件，因此由 DSH Go 通过 Provider/ConfigEditor 自行落盘，而不是 Magpie Go 直接修改 `cordis.patch.yml`。

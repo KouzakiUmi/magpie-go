@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  诊断工具只在 debug 变体里。
+
+  为什么移到这里：这些 Activity 会把 PRoot / magpie 的原始输出写进 logcat 与界面，
+  即便当前命令只是 `sync`，也可能带上用户数据。生产包不应包含它们，
+  也不应让外部通过 `am start` 唤起。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name=".ProbeActivity"
+            android:exported="true"
+            tools:ignore="ExportedActivity" />
+
+        <activity
+            android:name=".RuntimeProbeActivity"
+            android:exported="true"
+            tools:ignore="ExportedActivity" />
+    </application>
+
+</manifest>

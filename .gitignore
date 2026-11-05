@@ -1,0 +1,41 @@
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+*.apk
+*.aab
+*.apks
+*.jks
+*.keystore
+*.log
+
+# IDE and generated caches
+.idea/
+*.iml
+.DS_Store
+__pycache__/
+*.pyc
+.dart_tool/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+.credentials.yaml
+*credentials*.json
+*service-account*.json
+
+# Optional 108 MiB Bun runtime: restore with tooling/download-bun.sh
+app/src/main/assets/runtime/bun-arm64
+
+# Obsolete x86_64 PRoot copies; current arm64 binaries live in app/src/main/jniLibs
+assets/proot/
+
+# Local design history, rejected drafts, device screenshots and receipts
+design/device-verification/
+design/icon-v02/
+
+# OS temporary files
+Thumbs.db
+Desktop.ini

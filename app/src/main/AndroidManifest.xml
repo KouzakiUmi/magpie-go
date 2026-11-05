@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 长期驻留：magpie 是被其他客户端持续调用的网关，需要用户能关掉系统对它的
+         电池优化。这只申请「询问用户」的权限，不会自行把应用加进白名单。 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:name=".MagpieApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MagpieAndroid">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 诊断 Activity 只在 debug 变体里，声明见 app/src/debug/AndroidManifest.xml -->
+
+        <!--
+          magpie 需要长期驻留（它是模型网关，被其他客户端调用），
+          所以以前台服务运行，带低优先级常驻通知。
+          通知里不出现 web key 或任何凭据。
+        -->
+        <!-- 分享诊断文件用；只开放 cache/diagnostics 一个子目录 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- 通知里「省电设置」按钮的落点 -->
+        <receiver
+            android:name=".runtime.PowerSettingsActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.magpie.android.action.POWER_SETTINGS" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".runtime.MagpieService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="false" />
+
+    </application>
+
+</manifest>

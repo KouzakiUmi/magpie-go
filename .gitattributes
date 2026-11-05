@@ -1,0 +1,12 @@
+# Preserve upstream sources and notices exactly as distributed.
+third_party/proot/src/** -whitespace
+third_party/talloc/src/** -whitespace
+third_party/junit/LICENSE-junit.txt -whitespace
+
+# Binary assets must not be normalized by Git.
+*.so -text
+*.png -text
+*.webp -text
+*.webm -text
+*.apng -text
+*.jar -text
