@@ -1,6 +1,6 @@
 # 进度与待办
 
-> 本文只记尚未完成的事项。项目边界见 `AGENTS.md`，统一优先级见 `docs/requirements-backlog.md`，已执行验证见 `docs/verification.md`。
+> 本文只记尚未完成的事项。未完成需求的完整实现要点见 `docs/unfinished-work.md`；项目边界见 `AGENTS.md`，统一优先级见 `docs/requirements-backlog.md`，已执行验证见 `docs/verification.md`。
 
 ## 已完成并验证
 

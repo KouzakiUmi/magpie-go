@@ -89,7 +89,9 @@ curl -s http://127.0.0.1:9222/json     # 取 webSocketDebuggerUrl
 界面代码集中在 `app/src/main/java/com/magpie/android/ui/`，导航策略单测位于 `app/src/test/java/com/magpie/android/ui/`。不要为修复 UI 编译而修改其他工作包正在实现的 runtime/data 文件；先区分并报告失败来源。
 
 详细架构依据见 `docs/design.md`，已实测事实见 `docs/verified-findings.md`，
-未完成的进度与接续指引见 `docs/pending-work.md`。
+未完成的进度与接续指引见 `docs/pending-work.md`，未实现需求的详细要点见 `docs/unfinished-work.md`，
+**WebView 注入、主题联动、动效资产、上游适配等可复用做法见 `docs/reusable-practices.md`**，
+**Windows/WSL 全部工具链位置与命令见 `docs/environment.md`**。
 仓库目录为 `D:\Software Projects\Magpie Go`，App 包名仍是 `com.magpie.android`。
 
 ## 关键实测事实（不要凭直觉推翻）

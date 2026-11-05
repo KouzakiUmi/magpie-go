@@ -52,7 +52,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ## 文档
 
 - [`AGENTS.md`](AGENTS.md)：核心设计、边界和维护约定。
-- [`docs/requirements-backlog.md`](docs/requirements-backlog.md)：需求优先级与后续增强。
+- [`docs/requirements-backlog.md`](docs/requirements-backlog.md)：需求优先级与完成状态。
+- [`docs/unfinished-work.md`](docs/unfinished-work.md)：未实现需求与待核实项。
+- [`docs/reusable-practices.md`](docs/reusable-practices.md)：WebView 注入、主题联动、动效资产与上游适配的可复用做法。
+- [`docs/environment.md`](docs/environment.md)：Windows / WSL 工具链位置与构建命令。
 - [`docs/verification.md`](docs/verification.md)：构建和真机验证结果。
 - [`design/pixel-mascot/README.md`](design/pixel-mascot/README.md)：角色资产和派生脚本。
 

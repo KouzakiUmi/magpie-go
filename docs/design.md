@@ -75,4 +75,4 @@ DSH Go 的接收端是独立上游 PR 工作，详见 `docs/dsh-go-one-click-pro
 - Magpie Go 代码使用 CC BY-NC；原创角色和动画 ARR；内置 Magpie 按 MIT 许可。
 - 设备截图、测试备份、构建产物、用户配置和运行时缓存不进入公开仓库。
 
-后续增强与实施顺序见 `docs/requirements-backlog.md`；实际验证结果见 `docs/verification.md`。
+后续增强与实施顺序见 `docs/requirements-backlog.md`；未完成需求见 `docs/unfinished-work.md`；实际验证结果见 `docs/verification.md`；WebView 注入、主题联动、动效资产、上游适配等可复用做法见 `docs/reusable-practices.md`；工具链位置见 `docs/environment.md`。

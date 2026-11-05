@@ -46,7 +46,7 @@ Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 - `ProviderProfile.streamIdleTimeoutMs` 在客户端读写中保留，新增路由设为 600000ms。
 - 同一协议、同一模型保留 compat 和用户设置的 `maxTokens`；协议变化时重新计算。
 - 输出上限按桌面规则为压缩预留空间：至少保留窗口四分之一，或窗口一半减 65536 中的较大者。
-- `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels` / `reasoning_levels`。
+- `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels`（每项为 `{effort, summary}` 对象，取 `effort` 原生名）/ `reasoning_levels`（裸名字符串）回退。原生档位名映射到 DSH 档位键（`none→off`、`light→low`、`extra_high→xhigh`、`ultra→max` 等），写入的 API 值保留原生名而非档位键；仅 `off` 或空列表显式写 `false`，元数据不含档位字段时保留既有值。
 - `auto/...` 保留自动路由原 ID，不与供应商模型合并；普通供应商路由使用 slug、稳定哈希和协议共同构成唯一路由 ID。
 - 只更新当前导入模式管理的 Magpie 路由，其他 Provider 不动；旧 Magpie Group 仅在 displayName 确认属于旧导入器时清理。
 

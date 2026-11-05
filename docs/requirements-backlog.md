@@ -48,13 +48,13 @@
 - 新建公开 GitHub 仓库 `KouzakiUmi/magpie-go` 并推送。推送前完成身份、签名和独立只读交叉核验。
 - DSH Go 的配套源码改动不随 Magpie Go 仓库隐式发布；其提交与推送需要单独核对。
 
-## P5 — 当前供应商余额 / 用量通知（暂缓）
+## P5 — 当前供应商余额 / 用量通知（未实现，详见 `docs/unfinished-work.md`）
 
 - 每个当前启用的供应商账户分别显示一条通知，不合并币种。
 - 优先余额，其次额度窗口；无法读取时回退 token / 消费统计。
 - 已实测 `/api/providers` 和 `/api/usage/quotas` 的数据结构，详见 `docs/pending-work.md`。
 
-## P6 — APK / 内核更新模式（后续设计）
+## P6 — APK / 内核更新模式（未实现，详见 `docs/unfinished-work.md`）
 
 - 暂时移除更新检查和自动更新，不复用 Magpie 桌面安装器的更新方式。
 - 后续提供受控的内核更新机制，验证下载、签名、哈希、切换、回滚和真实启动。
