@@ -33,7 +33,7 @@
   - Magpie · Responses：25 个模型。
   - Magpie · Anthropic：3 个模型。
 - 第二次接入只更新，不重复创建；revision 在每条路由更新前重新读取，避免连续写入冲突。
-- Magpie Group 导入成功：Completions 44、Responses 25、Anthropic 3；供应商 displayName 带前缀，视频模态按 DSH 支持范围过滤，成功提示按实际写入模型数统计。
+- Magpie Group 三条协议路由均导入成功；供应商 displayName 带前缀，视频模态按 DSH 支持范围过滤，成功提示按实际写入模型数统计。
 
 ### 额外测试边界
 
