@@ -2,8 +2,13 @@
 
 本 Release 包含两个 Android arm64 APK：
 
-1. **Magpie Go**：本机 Magpie 运行时、管理页、备份、主题、派卡动画和可选 Bun 插件运行时。
+1. **Magpie Go**：本机 Magpie 运行时、管理页、备份、主题、派卡动画和可选 Bun 插件运行时。本包为 release 构建（保留与 debug 相同的签名，可直接覆盖旧包安装）。
 2. **DSH Go 修改版**：包含 Magpie Provider 接入、Auto Routing 和模型选择器调整。DSH Go 上游不接受 PR，因此以修改版 APK 提供，不向官方提交 PR。
+
+## 本次更新（2026-11-06）
+
+- **Magpie Go**：修复切换 tab 后主题被重置；修复「跟随系统」被固化为解析值——现在网页侧仍显示「跟随系统」，由 App 按系统亮暗实时解析并回锁。
+- **DSH Go 修改版**：Magpie 一键导入与桌面端 `dsh.go` 语义对齐（保留用户自选 api/baseURL、流式空闲超时与同协议 compat）；新增导入进度框（显示当前写入/移除的条目，完成前不可操作）与「导入前清除 Magpie Provider」选项；合并上游至 batch-18。
 
 ## 自动导入与手动配置的区别
 
@@ -42,5 +47,5 @@
 
 ## SHA-256
 
-- `magpie-go-v0.1.0-arm64-debug.apk`：`2d899dcb4bb0008e13d1a359939beb79a5527983909df55f0e2f419b36cca851`
-- `dsh-go-magpie-v1.0.11-arm64-release.apk`：`beb2cdba417e3fd9e712341041ea30eac372c97f84f1f55242b71d57049d4bf7`
+- `magpie-go-v0.1.0-arm64-release.apk`：`200d35c0157722beb68255c88b28d17f035d5b055f6ec9f85f3c38e1705646fd`
+- `dsh-go-magpie-v1.0.11-arm64-release.apk`：`929a36b505bd59adcce75cdd35ab51c0cb7c0d135661f5966a83be0b15da0fbf`

@@ -24,6 +24,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // 与已发布的 debug 包同签名，用户可直接升级覆盖；
+            // release 只是去掉 android:debuggable，不做混淆。
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
