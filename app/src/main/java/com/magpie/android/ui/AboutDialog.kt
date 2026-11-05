@@ -33,14 +33,14 @@ internal object AboutDialog {
         val pica = ImageView(context).apply {
             adjustViewBounds = true
             scaleType = ImageView.ScaleType.CENTER_INSIDE
-            layoutParams = LinearLayout.LayoutParams(dp(context, 96), dp(context, 96))
+            layoutParams = LinearLayout.LayoutParams(dp(context, 240), dp(context, 240))
             val drawable = PicaAnimation.drawable(context)
             setImageDrawable(drawable)
             animation = drawable
             drawable.start()
         }
         root.addView(pica)
-        root.addView(text(context, context.getString(R.string.app_name), 26, bold = true))
+        root.addView(text(context, context.getString(R.string.app_name), 26, bold = true, topMargin = 12))
         root.addView(text(context, context.getString(R.string.about_subtitle), 14))
         root.addView(text(context, context.getString(R.string.about_version, BuildConfig.VERSION_NAME), 12, color = "#667085"))
 
@@ -70,7 +70,11 @@ internal object AboutDialog {
                     val dark = isDarkPreference(context, value)
                     applyDialogPalette(root, dark)
                     dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(dialogBackground(dark)))
-                    root.postDelayed({ dialog.dismiss() }, 250)
+                    themeGroup.isEnabled = false
+                    repeat(themeGroup.childCount) { index -> themeGroup.getChildAt(index).isEnabled = false }
+                    dialog.setCancelable(false)
+                    disableTree(root)
+                    root.postDelayed({ dialog.dismiss() }, 3000)
                 }
             })
         }
@@ -214,6 +218,13 @@ internal object AboutLicenseDialog {
     }
 
     private fun dp(context: Context, value: Int) = (value * context.resources.displayMetrics.density).toInt()
+}
+
+private fun disableTree(view: View) {
+    view.isEnabled = false
+    if (view is ViewGroup) {
+        repeat(view.childCount) { index -> disableTree(view.getChildAt(index)) }
+    }
 }
 
 private fun isDarkPreference(context: Context, preference: ThemePreference): Boolean = when (preference) {

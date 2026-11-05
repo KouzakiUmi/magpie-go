@@ -483,7 +483,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // 用户可能刚在系统设置里改了电池豁免，回来时把通知里的过期入口去掉
         AndroidMagpieRuntime.getInstance(this).activeService()?.refreshNotification()
-        contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)?.applyThemePreference(themePreference)
+        applyTheme()
     }
 
     @Deprecated("老式返回键")
