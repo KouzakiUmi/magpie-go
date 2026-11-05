@@ -1,10 +1,10 @@
 # DSH Go 接收端 PR 交接
 
-DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接收端改动当作 Magpie Go 的内部实现。以下改动保存在本机 dsh-Go 工作区的 `feat/magpie-provider` 分支，提交为：
+DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接收端改动当作 Magpie Go 的内部实现。以下改动保存在独立干净上游源码目录 `dsh-Go-magpie-upstream` 的 main 分支，基于官方 `faf420f`，提交为：
 
-`a29d207b685c975e93b117ffa9490f78e2ccde5d`
+`a76fafbbcea14a270efa3fe72b8e6cb393f07202`
 
-提交具有本地 SSH 签名；尚未推送或创建 PR。
+提交具有本地 SSH 签名；尚未推送或创建 PR。该源码来自官方 `ccch1mneyyy/dsh-Go`，不包含原有工作区的其他修改。
 
 ## 文件
 
