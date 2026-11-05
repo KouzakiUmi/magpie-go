@@ -32,8 +32,8 @@
 
 ## DSH Go 接收端
 
-- `flutter analyze`：通过。
-- `flutter test test/providers/magpie_models_test.dart`：通过。
+- `flutter analyze`：通过（0 issues，2026-11-06 复核）。
+- `flutter test test/providers/`：190 项全部通过，含 `magpieImport` 端到端（clean 清扫与非 clean 保留用户 api/idle/compat 两条）。
 - `dart test test/provider_stream_idle_test.dart`：通过。
 - `dart analyze`：通过。
 - 真机打开 `dshgo://providers/magpie` 后显示确认框，确认后生成三条 Provider：
@@ -42,6 +42,8 @@
   - Magpie · Anthropic：3 个模型。
 - 第二次接入只更新，不重复创建；revision 在每条路由更新前重新读取，避免连续写入冲突。
 - Auto Routing 与供应商分组单测通过：`auto/...` 原 ID 保留，普通供应商按协议分路由，视频模态按 DSH 支持范围过滤。
+- 字段保留语义与桌面 `dsh.go` 对齐：用户自选 api/baseURL 保留、既有 `streamIdleTimeoutMs` 保留、协议变化时不继承 compat。
+- 主题回锁与「跟随系统」修复已改 `MagpieWebContainer.kt`，`assembleDebug` 与 `testDebugUnitTest` 通过；真机切换效果待实测。
 
 ### 额外测试边界
 

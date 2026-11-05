@@ -42,10 +42,15 @@
 
 ### 2.2「跟随系统」的语义
 
-- 本项目里「跟随系统」等于**当前系统亮暗的具体值**，不是上游的 `system` 字符串。
-- 系统亮暗变化时重新计算并写入。
+- 页面上锁定的值（`documentElement.dataset.theme` 与 `window.__magpieGoTheme`）是**当前系统亮暗的具体值**：系统变化时在 `onConfigurationChanged` 重新解析并写入——WebView 的 `prefers-color-scheme` 不一定跟系统走，不能只写 `system` 交给页面自查。
+- 但持久化进网页 `prefs.theme` 的值保留 `system`：这样 magpie 自己的设置项仍显示「跟随系统」，不会把我们解析出的值固化成用户的显式选择。
 
-### 2.3 生命周期
+### 2.3 页面会反写主题，需要一个回锁守卫
+
+- magpie 的 `applyPrefs` 在每次状态刷新（含切换 tab 触发的前端重渲染）都会拿 `prefs.theme` 重写 `root.dataset.theme`——只写一次会被冲掉。
+- 注入脚本里放一个只看 `data-theme` 的 MutationObserver：被改回别的值就立即写回 `window.__magpieGoTheme`；`applyThemePreference` 每次先更新 `__magpieGoTheme` 再写 `dataset.theme`，两者一致。
+
+### 2.4 生命周期
 
 - 页面加载完成（`onPageFinished`）、Activity `onResume`、系统 `onConfigurationChanged` 都要重新应用一次，否则后台返回后会退回默认主题。
 - Activity 重建（`applyTheme`）时不要重复 `setContent`，用 `mutableStateOf` 更新 Compose 状态。

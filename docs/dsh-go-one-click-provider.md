@@ -20,10 +20,11 @@
 
 1. Magpie Go 网关页显示「一键配置 DSH Go」。
 2. 系统打开 `dshgo://providers/magpie`，DSH Go 的 `LinkTrampolineActivity` 与 `dsh/links` 交付给 `LinkRouter`。
-3. DSH Go 显示确认框；用户确认前不修改配置。
-4. DSH Go 调用 `ProviderActions.discover` 验证引擎能读取模型，然后补读 Magpie `/v1/models` 的完整元数据。
-5. DSH Go 通过 `ProviderBackend.create/update` 写入 web profile 的 `cordis.patch.yml`，通过 `credentials.set` 保存 `MAGPIE_GATEWAY_KEY`。
-6. 按 API 导入时更新三条协议路由；重复接入不重复创建，空协议路由仅在按 API 导入时移除。按 Provider 导入时分别写入 Auto Routing 和供应商路由。
+3. DSH Go 显示确认框（可选「导入前清除 Magpie Provider」）；用户确认前不修改配置。
+4. DSH Go 显示不可关闭的进度框，逐条报告读取模型、写入/移除每条路由和保存凭据，完成后自动关闭并提示结果；导入完成前不允许操作。
+5. DSH Go 调用 `ProviderActions.discover` 验证引擎能读取模型，然后补读 Magpie `/v1/models` 的完整元数据。
+6. DSH Go 通过 `ProviderBackend.create/update` 写入 web profile 的 `cordis.patch.yml`，通过 `credentials.set` 保存 `MAGPIE_GATEWAY_KEY`。
+7. 按 API 导入时更新三条协议路由；重复接入不重复创建，空协议路由仅在按 API 导入时移除。按 Provider 导入时分别写入 Auto Routing 和供应商路由。
 
 ### 三条路由
 
@@ -41,14 +42,17 @@ DSH Go 的 `/root/.dsh` 位于它自己的私有运行时目录，Magpie Go 无�
 
 Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 
-## 保留与兼容
+## 保留与兼容（与桌面 `dsh.go` 契约对齐）
 
-- `ProviderProfile.streamIdleTimeoutMs` 在客户端读写中保留，新增路由设为 600000ms。
-- 同一协议、同一模型保留 compat 和用户设置的 `maxTokens`；协议变化时重新计算。
-- 输出上限按桌面规则为压缩预留空间：至少保留窗口四分之一，或窗口一半减 65536 中的较大者。
-- `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels`（每项为 `{effort, summary}` 对象，取 `effort` 原生名）/ `reasoning_levels`（裸名字符串）回退。原生档位名映射到 DSH 档位键（`none→off`、`light→low`、`extra_high→xhigh`、`ultra→max` 等），写入的 API 值保留原生名而非档位键；仅 `off` 或空列表显式写 `false`，元数据不含档位字段时保留既有值。
+- 用户给路由选过的 `api` 保留（网关支持的三种协议内，对应 `dshAPI`）；`baseURL` 跟随解析后的 api（`dshBaseURL`）。compat 开关按解析后的 api 写（`openai-responses`→`supportsStrictMode`，`anthropic-messages`→`forceAdaptiveThinking`）。
+- `ProviderProfile.streamIdleTimeoutMs` 已有值保留（`dshIdleKey`），没有才写 600000ms。
+- 同一协议、同一模型保留 compat 和用户设置的 `maxTokens`；协议变化时 compat 不继承（`dshKeepCompat`），重新计算。
+- 输出上限按桌面规则为压缩预留空间：至少保留窗口四分之一，或窗口一半减 65536 中的较大者。`contextWindow` 为 0/缺失时不写出（对应 `omitempty`）。
+- `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels`（每项为 `{effort, summary}` 对象，取 `effort` 原生名）/ `reasoning_levels`（裸名字符串）回退。原生档位名映射到 DSH 档位键（`none→off`、`light→low`、`extra_high→xhigh`、`ultra→max` 等），按 `dshThinking` 顺序输出、写入值保留原生名；仅 `off` 或空列表显式写 `false`，元数据不含档位字段时保留既有值。
+- 自适应思考模型按网关 `claudeVersion` 正则识别（含版本在前的 `claude-5-sonnet` 写法）与 `glmOutputEffort`（GLM-5.2/5.3）。
 - `auto/...` 保留自动路由原 ID，不与供应商模型合并；普通供应商路由使用 slug、稳定哈希和协议共同构成唯一路由 ID。
 - 只更新当前导入模式管理的 Magpie 路由，其他 Provider 不动；旧 Magpie Group 仅在 displayName 确认属于旧导入器时清理。
+- 「导入前清除」会删除全部 Magpie 托管 profile（`magpie-` 前缀或 `Magpie ·` 显示名、且指向本机网关、`apiKeyEnv` 为 `MAGPIE_GATEWAY_KEY`）后全新写入，不继承任何旧值；用户自建路由不受影响。
 
 ## 验证
 

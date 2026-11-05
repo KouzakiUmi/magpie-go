@@ -181,17 +181,35 @@ class MagpieWebContainer(
                 android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
+    /**
+     * App 主题 -> 页面主题。magpie 自己的 `applyPrefs` 在每次状态刷新/切 tab
+     * 都会用 `prefs.theme` 把 `root.dataset.theme` 重写回去（`theme:"system"`
+     * 会删属性退到 `prefers-color-scheme`），所以我们在注入脚本里放了一个
+     * `data-theme` 的 MutationObserver：检测到不是目标值就写回。
+     *
+     * `window.__magpieGoTheme` 始终是解析后的目标主题（'dark'/'light'）：
+     * FollowSystem 也写成解析值——WebView 的 prefers-color-scheme 不一定
+     * 跟系统走，由我们在 onConfigurationChanged 时按 uiMode 重新解析再写。
+     * 只有 `persist` 存进网页 prefs 的值保留 'system'，让网页自己的设置项
+     * 显示「跟随系统」。
+     */
     fun applyThemePreference(preference: ThemePreference, persist: Boolean = false) {
-        val theme = when (preference) {
+        val resolved = when (preference) {
             ThemePreference.Dark -> "dark"
             ThemePreference.Light -> "light"
             ThemePreference.FollowSystem -> if (isDarkTheme()) "dark" else "light"
         }
+        val prefValue = when (preference) {
+            ThemePreference.Dark -> "dark"
+            ThemePreference.Light -> "light"
+            ThemePreference.FollowSystem -> "system"
+        }
         webView?.evaluateJavascript(
             "(function(){var apply=function(attempt){"
                 + "if(attempt>20)return;"
-                + "document.documentElement.dataset.theme='$theme';"
-                + "if($persist && typeof prefWrite==='function' && typeof prefs!=='undefined' && prefs){prefWrite({theme:'$theme'});return;}"
+                + "window.__magpieGoTheme='$resolved';"
+                + "document.documentElement.dataset.theme='$resolved';"
+                + "if($persist && typeof prefWrite==='function' && typeof prefs!=='undefined' && prefs){prefWrite({theme:'$prefValue'});return;}"
                 + "if(!$persist)return;"
                 + "setTimeout(function(){apply(attempt+1);},250);"
                 + "};apply(0);})()",
@@ -384,6 +402,20 @@ class MagpieWebContainer(
                 'input[type=number],textarea,select{font-size:17px !important}'
               ].join('');
               document.head.appendChild(css);
+
+              // magpie's own applyPrefs rewrites root.dataset.theme from
+              // prefs.theme on every state refresh — including a tab switch —
+              // so a theme the app picked only in-page is overwritten.
+              // Watch the attribute and write the app's choice back.
+              var lockTheme = function () {
+                var want = window.__magpieGoTheme;
+                if (want && document.documentElement.dataset.theme !== want) {
+                  document.documentElement.dataset.theme = want;
+                }
+              };
+              new MutationObserver(lockTheme)
+                .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+              lockTheme();
 
               // Replace every use of the upstream bird, including route cards
               // and the roaming skeleton bird added after page load.
