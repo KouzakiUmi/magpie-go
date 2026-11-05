@@ -29,10 +29,11 @@
 - `dart test test/provider_stream_idle_test.dart`：通过。
 - `dart analyze`：通过。
 - 真机打开 `dshgo://providers/magpie` 后显示确认框，确认后生成三条 Provider：
-  - Magpie：55 个模型。
-  - Magpie · Responses：15 个模型。
-  - Magpie · Anthropic：4 个模型。
+  - Magpie：49 个模型。
+  - Magpie · Responses：25 个模型。
+  - Magpie · Anthropic：3 个模型。
 - 第二次接入只更新，不重复创建；revision 在每条路由更新前重新读取，避免连续写入冲突。
+- Magpie Group 导入成功：Completions 44、Responses 25、Anthropic 3；供应商 displayName 带前缀，视频模态按 DSH 支持范围过滤，成功提示按实际写入模型数统计。
 
 ### 额外测试边界
 
@@ -40,4 +41,4 @@
 
 ## 发布排除项
 
-设备截图、用户配置、API key、Web key、登录态、构建产物、测试备份和本地运行时缓存不进入发布仓库。Bun 二进制超过 GitHub 单文件限制，使用固定版本与哈希的恢复脚本替代。
+设备截图、用户配置、API key、Web key、登录态、构建产物、测试备份和本地运行时缓存不进入发布仓库。插件页面与 Bun 插件运行时不提供，因此没有额外的插件二进制需要分发。
