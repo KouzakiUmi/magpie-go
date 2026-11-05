@@ -307,6 +307,7 @@ class MagpieWebContainer(
                 '.xq-her video{object-fit:fill !important;-webkit-mask-image:none !important}',
                 '.md-thumb{background:#e8f1fb url("/icons/mascot-head.png") center / 34px 34px no-repeat !important}',
                 '#connect > *:not(.magpie-dsh-connect),#foldModels,#gwModels,#findModel,#copyModels{display:none !important}',
+                'nav button:hover,nav button:focus{box-shadow:none !important;outline:none !important;background:transparent !important}',
                 'nav button[data-view="agents"],nav button[data-view="sessions"],nav button[data-view="library"],',
                 '#agents,#sessions,#library{display:none !important}',
                 '.magpie-dsh-connect{display:block !important;width:100% !important;',
@@ -356,6 +357,15 @@ class MagpieWebContainer(
                   + '#wslAgentsRow,#sessionTerminalRow,#agentPrefRows,#sessionReadsList,'
                   + '#usageAgents,#usageAgentsHid,#agentsInstall,#agentsManage,#view-agents,#view-sessions')
                   .forEach(function (el) { el.style.setProperty('display', 'none', 'important'); });
+                var activeTab = document.querySelector('nav button.on');
+                var navThumb = document.querySelector('nav .thumb');
+                if (activeTab && navThumb) {
+                  var nav = activeTab.closest('nav');
+                  navThumb.style.left = '0px';
+                  navThumb.style.right = 'auto';
+                  var currentTransform = new DOMMatrix(getComputedStyle(navThumb).transform).m41;
+                  navThumb.style.transform = 'translateX(' + (currentTransform + activeTab.getBoundingClientRect().left - navThumb.getBoundingClientRect().left) + 'px)';
+                }
                 var logo = document.querySelector('.brand .logo');
                 if (logo && !logo.querySelector('.magpie-pixel-logo')) {
                   var bird = document.createElement('img');
