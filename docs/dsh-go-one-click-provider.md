@@ -62,5 +62,6 @@ Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 - 按 API 导入使用 `magpie`、`magpie-responses`、`magpie-anthropic` 三条协议路由。
 - 按 Provider 导入使用 `magpie-group`、`magpie-group-responses`、`magpie-group-anthropic`，作为 Magpie Group 分组名称；当前 DSH 的 `api` 仍是 Provider 级配置，不能混在一个协议 Provider 中。
 - `auto/...` 别名按 `owned_by` 转为供应商前缀，模型 displayName 也带供应商，便于在 DSH Go 中辨认。
+- 视觉模态只保留 DSH 支持的 `text` 和 `image`，过滤 `video`；Reasoning 使用 `off/light/xhigh/ultra` 映射。
 - 只允许本机引擎接入；更新每条路由前重新读取该路由和 revision，创建也带 revision，避免覆盖并发修改。
 - 手机端每分钟比较模型列表指纹；变化时通知“列表发生改变，请重新导入更新”，不自动覆盖现有配置。

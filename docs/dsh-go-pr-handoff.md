@@ -5,6 +5,7 @@ DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接�
 - `a76fafbbcea14a270efa3fe72b8e6cb393f07202`：三协议 Provider 接入。
 - `4f000a4`：`auto/...` 别名按 `owned_by` 转为供应商前缀并去重。
 - `b8f0bf3`：Magpie Group 导入、供应商显示名、视觉/思考元数据、并发写入与超时处理。
+- `20d4118`：过滤 DSH 不支持的 `video` 模态，保留 `text` 和 `image`。
 - `9d6dd59`：刷新 PRoot 运行时包版本与哈希。
 
 这些提交具有本地 SSH 签名；尚未推送或创建 PR。该源码来自官方 `ccch1mneyyy/dsh-Go`，不包含原有工作区的其他修改。
