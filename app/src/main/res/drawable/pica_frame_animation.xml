@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
-    <item android:drawable="@drawable/pica_idle" android:duration="2200" />
-    <item android:drawable="@drawable/pica_wink" android:duration="220" />
-    <item android:drawable="@drawable/pica_idle" android:duration="900" />
-    <item android:drawable="@drawable/pica_wave" android:duration="1200" />
-    <item android:drawable="@drawable/pica_idle" android:duration="600" />
-    <item android:drawable="@drawable/pica_happy" android:duration="1400" />
-    <item android:drawable="@drawable/pica_idle" android:duration="1400" />
+    <item android:drawable="@drawable/pica_idle" android:duration="650" />
+    <item android:drawable="@drawable/pica_idle_to_wink_a" android:duration="150" />
+    <item android:drawable="@drawable/pica_idle_to_wink_b" android:duration="150" />
+    <item android:drawable="@drawable/pica_wink" android:duration="600" />
+    <item android:drawable="@drawable/pica_wink_to_wave_a" android:duration="150" />
+    <item android:drawable="@drawable/pica_wink_to_wave_b" android:duration="150" />
+    <item android:drawable="@drawable/pica_wave" android:duration="700" />
+    <item android:drawable="@drawable/pica_wave_to_happy_a" android:duration="150" />
+    <item android:drawable="@drawable/pica_wave_to_happy_b" android:duration="150" />
+    <item android:drawable="@drawable/pica_happy" android:duration="750" />
+    <item android:drawable="@drawable/pica_happy_to_idle_a" android:duration="180" />
+    <item android:drawable="@drawable/pica_happy_to_idle_b" android:duration="550" />
 </animation-list>
