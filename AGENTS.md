@@ -39,9 +39,10 @@
 吉祥物名为 **派卡（Pica，取 Picker 意象）**。用户已确认 `design/character-turnaround/kxyai-2ff44ba5.png` 的三视图。派卡使用深蓝冠羽、白脸胸、短鸟喙、蓝宝石眼睛、黑白双翼、钴蓝/青绿羽端和长尾羽；不复用官方小鹊、官方鸟标或早期候选，不加服装与兽类肢体。精细设定先定稿，像素化只用于应用资产。脱敏演示文案中的旧称呼“小鹊”统一替换为“派卡”。
 
 - 启动图标和单色轮廓使用 `magpie_mascot`，完整双翼必须留在自适应图标安全区。Compose 加载页使用 `magpie_jump` 的 Q 版全身侧身图，3 秒循环右跳、落地、镜像左跳、落地；ImageBitmap 显式使用 `FilterQuality.None`。
-- `MagpieWebContainer.brandedAsset()` 仅拦截 loopback 的 favicon、触控图标、大头照与 `xq_light/dark` 固定资源路径，返回 `assets/branding/` 本地素材，不改 `libmagpie.so` 或其他请求。视频响应提供完整流和 `Accept-Ranges: bytes`，由 Chromium 应用 Range；不要在应用层重复跳过字节或合成第二个 206。
+- `MagpieWebContainer.brandedAsset()` 仅拦截 loopback 的 favicon、触控图标、大头照、派卡挥翼帧与 `xq_light/dark` 固定资源路径，返回 `assets/branding/` 本地素材，不改 `libmagpie.so` 或其他请求。路由加载 SVG 的 `g.bird` 替换为派卡图像并保留 `bird-bob`。视频响应提供完整流和 `Accept-Ranges: bytes`，由 Chromium 应用 Range；不要在应用层重复跳过字节或合成第二个 206。
 - 网页左上角沿用 `.brand .logo` 点击区域，注入像素角色；演示入口使用 `mascot-head.png` 完整大头照；不重写管理页。
 - 脱敏视频为 672×448 横版，以原关键帧动作和构图为目标替换角色，保留八段羽翼动作、27.5 秒、原舞台坐标、单遍播放、懒加载、折叠释放源、减少动态效果与无视频回退。
+- 首页和全屏 About 使用图像生成的派卡原画帧与 `drawable/pica_frame_animation.xml`，包含站立、Wink、挥翼和开心动作；不使用脚本修图。工具栏为菜单（含导出日志）/网络代理/关于；主题偏好保存在 `magpie_go_ui`。
 - 原稿、派生脚本和维护说明见 `design/pixel-mascot/README.md`；不要覆盖原稿。
 
 ## WebView 窄屏适配
@@ -135,5 +136,5 @@ Windows 的 Git Bash 会把 `/data/local/tmp/...` 当本机路径，`adb push` �
 
 ## 已知限制
 
-- **不提供插件页面或宿主插件运行时**：不解压或注入 Bun，不展示插件、会话检测和资源库入口；Magpie 核心供应商、路由、网关和备份功能保留。
+- **插件框架保留**：会话检测、资源库等桌面端内置入口隐藏；第三方插件与自动签到可用。首页「下载额外组件」按固定官方 release 和 SHA-256 安装 Android arm64 Bun 到 `files/runtime/bin/bun`，再通过 `MAGPIE_BUN` 注入；不下载不影响核心网关。
 - **只支持 arm64 真机**：`jniLibs/arm64-v8a` 是唯一当前目标，x86_64 模拟器是后续工作。

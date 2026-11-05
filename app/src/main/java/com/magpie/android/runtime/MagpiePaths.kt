@@ -16,6 +16,9 @@ class MagpiePaths(context: Context) {
     val bundledTalloc = File(binDir, "libtalloc.so")
     val shmem = File(binDir, "libandroid-shmem.so")
 
+    /** 用户可选下载的官方 Android Bun；Magpie 插件与自动签到通过它运行。 */
+    val bun = File(root, "bin/bun")
+
     val lib = File(root, "lib")
     val talloc = File(lib, "libtalloc.so.2")
     val run = File(root, "run")

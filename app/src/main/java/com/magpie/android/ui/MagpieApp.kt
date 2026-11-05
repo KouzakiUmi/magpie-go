@@ -29,9 +29,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +53,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.graphics.drawable.AnimationDrawable
 import com.magpie.android.R
 import com.magpie.android.runtime.MagpieConfig
 import com.magpie.android.runtime.MagpieEvent
@@ -72,6 +76,7 @@ fun MagpieApp(
     onExit: () -> Unit,
     onShowWeb: (MagpieStatus) -> Unit = {},
     onHideWeb: () -> Unit = {},
+    onShowExtras: () -> Unit = {},
 ) {
     if (runtime == null) {
         MessageScreen(
@@ -120,6 +125,7 @@ fun MagpieApp(
             busy = operationRunning,
             operationFailed = operationFailed,
             onInstall = { launchOperation { runtime.install() } },
+            onShowExtras = onShowExtras,
         )
 
         MagpiePhase.Installing -> InstallingScreen(progress)
@@ -129,6 +135,7 @@ fun MagpieApp(
             busy = operationRunning,
             operationFailed = operationFailed,
             onStart = { launchOperation { runtime.start(startConfig) } },
+            onShowExtras = onShowExtras,
         )
 
         MagpiePhase.Starting -> LoadingScreen(
@@ -165,10 +172,13 @@ private fun InstallScreen(
     busy: Boolean,
     operationFailed: Boolean,
     onInstall: () -> Unit,
+    onShowExtras: () -> Unit,
 ) {
     MessageScreen(
         title = stringResource(R.string.install_title),
         body = stringResource(R.string.install_body),
+        homeAnimation = true,
+        onShowExtras = onShowExtras,
     ) {
         if (operationFailed) OperationError()
         Button(
@@ -230,11 +240,14 @@ private fun StartScreen(
     busy: Boolean,
     operationFailed: Boolean,
     onStart: () -> Unit,
+    onShowExtras: () -> Unit,
 ) {
     val isError = status.phase == MagpiePhase.Error
     MessageScreen(
         title = stringResource(if (isError) R.string.error_title else R.string.start_title),
         body = stringResource(if (isError) R.string.error_body else R.string.start_body),
+        homeAnimation = true,
+        onShowExtras = onShowExtras,
     ) {
         status.error?.takeIf { it.isNotBlank() }?.let { error ->
             Text(
@@ -265,6 +278,29 @@ private fun LoadingScreen(title: String, body: String) {
     MessageScreen(title = title, body = body) {
         CircularProgressIndicator()
     }
+}
+
+@Composable
+private fun HomePicaAnimation(size: Dp = 104.dp) {
+    val context = LocalContext.current
+    val drawable = androidx.compose.runtime.remember(context) {
+        PicaAnimation.drawable(context)
+    }
+    DisposableEffect(drawable) {
+        val animated = drawable as? AnimationDrawable
+        animated?.start()
+        onDispose { animated?.stop() }
+    }
+    AndroidView(
+        factory = { viewContext ->
+            android.widget.ImageView(viewContext).apply {
+                contentDescription = viewContext.getString(R.string.app_name)
+                scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                setImageDrawable(drawable)
+            }
+        },
+        modifier = Modifier.size(size),
+    )
 }
 
 @Composable
@@ -340,6 +376,8 @@ private fun OperationError() {
 private fun MessageScreen(
     title: String,
     body: String,
+    homeAnimation: Boolean = false,
+    onShowExtras: () -> Unit = {},
     content: (@Composable () -> Unit)? = null,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -363,11 +401,21 @@ private fun MessageScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Spacer(Modifier.weight(1f))
-                Text(
-                    "DSH Go",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                if (homeAnimation) {
+                    TextButton(onClick = onShowExtras) {
+                        Text(
+                            stringResource(R.string.extra_components),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                } else {
+                    Text(
+                        "DSH Go",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
             Spacer(Modifier.height(28.dp))
             Surface(
@@ -400,7 +448,7 @@ private fun MessageScreen(
                             )
                         }
                         Spacer(Modifier.width(12.dp))
-                        AnimatedMagpie(size = 96.dp)
+                        if (homeAnimation) HomePicaAnimation(size = 112.dp) else AnimatedMagpie(size = 96.dp)
                     }
                     content?.let { it() }
                 }

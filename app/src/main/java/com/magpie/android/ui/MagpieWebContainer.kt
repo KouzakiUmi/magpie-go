@@ -64,6 +64,7 @@ class MagpieWebContainer(
             "/icons/magpie-jump.png" -> "branding/magpie-jump.png"
             "/icons/magpie-smile.png" -> "branding/magpie-smile.png"
             "/icons/favicon.svg" -> "branding/favicon.svg"
+            "/plugins/redact/pica_wave.png" -> "branding/pica_wave.png"
             "/plugins/redact/xq_light.jpg" -> "branding/xq_light.jpg"
             "/plugins/redact/xq_dark.jpg" -> "branding/xq_dark.jpg"
             "/plugins/redact/xq_light.webm" -> "branding/xq_light.webm"
@@ -165,6 +166,10 @@ class MagpieWebContainer(
 
     fun reload() {
         webView?.reload()
+    }
+
+    fun openSettings() {
+        webView?.loadUrl("http://127.0.0.1:3430/?view=settings")
     }
 
     fun canGoBack(): Boolean = webView?.canGoBack() == true
@@ -360,7 +365,7 @@ class MagpieWebContainer(
                 replaceMagpieWord(brand);
                 replaceMagpieWord(document.getElementById('mdRow'));
                 replaceMagpieWord(document.querySelector('.xqd'));
-                ['agents', 'sessions', 'library', 'plugins'].forEach(function (viewName) {
+                ['agents', 'sessions', 'library'].forEach(function (viewName) {
                   document.querySelector('nav button[data-view="' + viewName + '"]')
                     ?.style.setProperty('display', 'none', 'important');
                   document.getElementById(viewName)?.style.setProperty('display', 'none', 'important');
@@ -397,6 +402,17 @@ class MagpieWebContainer(
                   });
                   logo.appendChild(bird);
                 }
+                document.querySelectorAll('svg g.bird').forEach(function (group) {
+                  var image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                  image.setAttribute('href', '/plugins/redact/pica_wave.png');
+                  image.setAttribute('x', '0');
+                  image.setAttribute('y', '0');
+                  image.setAttribute('width', '44');
+                  image.setAttribute('height', '44');
+                  image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  image.setAttribute('class', 'bird');
+                  group.replaceWith(image);
+                });
                 document.querySelectorAll('svg').forEach(function (svg) {
                   if (svg.closest('.brand .logo') || !svg.querySelector('use[href="#bird"]')) return;
                   var img = document.createElement('img');

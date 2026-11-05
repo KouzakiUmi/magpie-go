@@ -14,6 +14,7 @@
 - `build_assets.py`：生成启动器前景、单色轮廓及网页半身像。启动器前景限制在自适应图标安全区，双翼不得被遮罩裁切。
 - `build_motion_assets.py`：生成 `magpie_jump` 全身跳跃图和 `mascot-head.png` 完整大头照。
 - `build_videos.py`：把八段动作合成 **672×448、24fps、27.5 秒、VP9 WebM** 的浅色/深色连续动画，并生成对应海报与 `master/landscape-contact.png` 审阅图。
+- `generated/pica-idle.png`、`pica-wink.png`、`pica-wave.png`、`pica-happy.png`：使用图像生成制作的派卡原画帧；首页与 About 通过 `res/drawable/pica_frame_animation.xml` 播放，不使用脚本修图。`pica-wave.png` 同时替换路由加载 SVG 的旧喜鹊，保留原 `bird-bob` 动作。
 - `asset-manifest.json`：主要输入与派生资产哈希。
 
 所有像素派生使用最近邻；深色视频只调整背景和桌面，不改变角色固有色。原始生成图与派生图分开保存。

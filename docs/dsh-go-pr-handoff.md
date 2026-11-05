@@ -1,19 +1,21 @@
 # DSH Go 接收端 PR 交接
 
-DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接收端改动当作 Magpie Go 的内部实现。以下改动保存在独立干净上游源码目录 `dsh-Go-magpie-upstream` 的 main 分支，基于官方 `faf420f`，提交为：
+DSH Go 是独立上游项目。本仓库不携带其完整源码，也不把接收端改动当作 Magpie Go 的内部实现。以下改动保存在独立干净上游源码目录 `dsh-Go-magpie-upstream` 的 main 分支，已 rebase 到官方 `16cb44b`，提交为：
 
-- `a76fafbbcea14a270efa3fe72b8e6cb393f07202`：三协议 Provider 接入。
-- `4f000a4`：`auto/...` 别名按 `owned_by` 转为供应商前缀并去重。
-- `b8f0bf3`：Magpie Group 导入、供应商显示名、视觉/思考元数据、并发写入与超时处理。
-- `20d4118`：过滤 DSH 不支持的 `video` 模态，保留 `text` 和 `image`。
-- `f49b70f`：成功提示按实际写入路由统计模型数。
-- `9d6dd59`：刷新 PRoot 运行时包版本与哈希。
+- `ff3d687`：三协议 Provider 接入。
+- `0460b60`：供应商模型 ID 处理。
+- `9670424`：刷新 PRoot 运行时包版本与哈希。
+- `83b00c5`：供应商分组、显示名、视觉/思考元数据、并发写入与超时处理。
+- `a611ffd`：过滤 DSH 不支持的 `video` 模态，保留 `text` 和 `image`。
+- `2c131c7`：成功提示按实际写入路由统计模型数。
+- `8b93314`：保留 `auto/...` 自动路由 ID，独立为 Auto Routing，其余模型按供应商和协议分组。
+- `424d3bf`：供应商 slug、稳定哈希与协议组成唯一路由 ID，旧 Group 清理校验归属。
 
 这些提交具有本地 SSH 签名；尚未推送或创建 PR。该源码来自官方 `ccch1mneyyy/dsh-Go`，不包含原有工作区的其他修改。
 
 ## 文件
 
-- `app/lib/links/magpie_links.dart`：确认框、三条 Provider 的创建/更新、逐条 revision、凭据保存和验证。
+- `app/lib/links/magpie_links.dart`：确认框；按 API 的三条路由，以及按 Provider 的 Auto Routing/供应商/协议路由创建与更新、逐条 revision 和凭据保存。
 - `app/lib/state/magpie_models.dart`：模型元数据读取、协议分组、思考档位、compat 与输出上限保留。
 - `app/lib/links/app_links.dart`：注册 `dshgo://providers/magpie`。
 - `packages/dsh_client/lib/src/providers_api.dart`：保留 `streamIdleTimeoutMs`。

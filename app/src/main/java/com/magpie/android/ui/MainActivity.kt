@@ -9,7 +9,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.magpie.android.runtime.AndroidMagpieRuntime
@@ -37,6 +40,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var toolBar: android.view.View
     private var proxyDialog: ProxySettingsDialog? = null
     private var runtimeInstance: com.magpie.android.runtime.MagpieRuntime? = null
+    private var runtimeProvider: MagpieRuntimeProvider? = null
+    private var startConfig = MagpieConfig()
+    private lateinit var composeHost: ComposeView
+    private var themePreference = ThemePreference.FollowSystem
     /** 渲染进程崩溃的次数；变化后强制重建 WebView 容器。 */
     private var webRenderGeneration = 0
 
@@ -66,6 +73,7 @@ class MainActivity : ComponentActivity() {
 
         runtimeInstance = (application as? MagpieRuntimeProvider)?.runtime()
         val runtime = application as? MagpieRuntimeProvider
+        runtimeProvider = runtime
         if (runtime == null) {
             root.addView(
                 android.widget.TextView(this).apply {
@@ -77,25 +85,69 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        val startConfig = (application as? StartConfigProvider)?.config() ?: MagpieConfig()
+        startConfig = (application as? StartConfigProvider)?.config() ?: MagpieConfig()
+        themePreference = ThemePreferenceStore.get(this)
 
         // 用显式的 ComposeView 而不是 setContent：后者会把 Activity 的内容视图
         // 整个换掉，之后 addView 加的原生视图会挂到被替换的旧容器上，看不见。
-        val host = ComposeView(this).apply {
-            setContent {
-                MagpieTheme {
-                    MagpieApp(
-                        runtime = runtime.runtime(),
-                        startConfig = startConfig,
-                        onExit = ::finish,
-                        onShowWeb = ::showWeb,
-                        onHideWeb = ::removeWebContainer,
-                    )
-                }
+        composeHost = ComposeView(this)
+        applyTheme()
+        root.addView(composeHost, FrameLayout.LayoutParams(-1, -1))
+
+    }
+
+    private fun applyTheme() {
+        composeHost.setContent {
+            MagpieTheme(preference = themePreference) {
+                MagpieApp(
+                    runtime = runtimeProvider?.runtime(),
+                    startConfig = startConfig,
+                    onExit = ::finish,
+                    onShowWeb = ::showWeb,
+                    onHideWeb = ::removeWebContainer,
+                    onShowExtras = ::showExtraComponents,
+                )
             }
         }
-        root.addView(host, FrameLayout.LayoutParams(-1, -1))
+        updateToolbarColors()
+    }
 
+    private fun isDarkTheme(): Boolean = when (themePreference) {
+        ThemePreference.Dark -> true
+        ThemePreference.Light -> false
+        ThemePreference.FollowSystem ->
+            resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private fun updateToolbarColors() {
+        val dark = isDarkTheme()
+        toolBar.setBackgroundColor(Color.parseColor(if (dark) "#182238" else "#F7F7F8"))
+        val iconColor = Color.parseColor(if (dark) "#E2F2FF" else "#3C4043")
+        val labelColor = Color.parseColor(if (dark) "#C6D2E4" else "#5F6368")
+        fun tint(view: android.view.View) {
+            if (view is android.widget.TextView) {
+                view.setTextColor(if (view.tag == "toolbar_label") labelColor else iconColor)
+            }
+            if (view is android.view.ViewGroup) {
+                repeat(view.childCount) { index -> tint(view.getChildAt(index)) }
+            }
+        }
+        tint(toolBar)
+    }
+
+    private fun showAbout() {
+        AboutDialog.show(
+            this,
+            themePreference,
+            onConfigure = {
+                contentArea.findViewWithTag<MagpieWebContainer>(WEB_TAG)?.openSettings()
+            },
+        ) { preference ->
+            themePreference = preference
+            ThemePreferenceStore.set(this, preference)
+            applyTheme()
+        }
     }
 
     /** 用原生容器显示 magpie 的管理页。 */
@@ -164,11 +216,11 @@ class MainActivity : ComponentActivity() {
                 android.widget.LinearLayout.LayoutParams(0, dp(44)).apply { weight = 1f },
             )
             addView(
-                toolButton(R.string.export_logs, "⤓") { exportDiagnostics() },
+                toolButton(R.string.proxy_dialog_title, "⇄") { showProxySettings() },
                 android.widget.LinearLayout.LayoutParams(0, dp(44)).apply { weight = 1f },
             )
             addView(
-                toolButton(R.string.proxy_dialog_title, "⇄") { showProxySettings() },
+                toolButton(R.string.about, "ⓘ") { showAbout() },
                 android.widget.LinearLayout.LayoutParams(0, dp(44)).apply { weight = 1f },
             )
         }
@@ -197,17 +249,19 @@ class MainActivity : ComponentActivity() {
             setOnClickListener { onClick() }
             addView(
                 android.widget.TextView(this@MainActivity).apply {
+                    tag = "toolbar_icon"
                     text = icon
                     textSize = 16f
-                    setTextColor(Color.parseColor("#3C4043"))
+                    setTextColor(Color.parseColor(if (isDarkTheme()) "#E2F2FF" else "#3C4043"))
                     gravity = Gravity.CENTER
                 },
             )
             addView(
                 android.widget.TextView(this@MainActivity).apply {
+                    tag = "toolbar_label"
                     setText(labelRes)
                     textSize = 10f
-                    setTextColor(Color.parseColor("#5F6368"))
+                    setTextColor(Color.parseColor(if (isDarkTheme()) "#C6D2E4" else "#5F6368"))
                     gravity = Gravity.CENTER
                 },
             )
@@ -221,15 +275,85 @@ class MainActivity : ComponentActivity() {
         popup.menu.add(0, MENU_RESTART, 0, R.string.gateway_restart).isEnabled = running
         popup.menu.add(0, MENU_STOP, 1, R.string.gateway_stop).isEnabled = running
         popup.menu.add(1, MENU_RESET, 2, R.string.runtime_reset)
+        popup.menu.add(1, MENU_EXPORT_LOGS, 3, R.string.export_logs)
+        popup.menu.add(1, MENU_COMPONENTS, 4, R.string.extra_components)
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 MENU_RESTART -> { restartGateway(); true }
                 MENU_STOP -> { stopGateway(); true }
                 MENU_RESET -> { confirmReset(); true }
+                MENU_EXPORT_LOGS -> { exportDiagnostics(); true }
+                MENU_COMPONENTS -> { showExtraComponents(); true }
                 else -> false
             }
         }
         popup.show()
+    }
+
+    private fun showExtraComponents() {
+        if (componentDownloadJob?.isActive == true) {
+            showComponentProgress()
+            return
+        }
+        val installed = com.magpie.android.runtime.BunRuntimeManager.isInstalled(this)
+        android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.extra_components)
+            .setMessage(if (installed) R.string.bun_installed_body else R.string.bun_download_body)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(if (installed) R.string.bun_reinstall else R.string.bun_download) { _, _ ->
+                downloadExtraComponents()
+            }
+            .show()
+    }
+
+    private fun showComponentProgress() {
+        if (componentProgress?.isShowing == true) return
+        componentProgress = android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.extra_components)
+            .setMessage(R.string.bun_downloading)
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun downloadExtraComponents() {
+        if (componentDownloadJob?.isActive == true) {
+            showComponentProgress()
+            return
+        }
+        showComponentProgress()
+        val app = application
+        componentDownloadJob = componentScope.launch {
+            try {
+            val result = withContext(Dispatchers.IO) {
+                com.magpie.android.runtime.BunRuntimeManager.install(app)
+            }
+            componentProgress?.dismiss()
+            componentProgress = null
+            result.onSuccess {
+                val runtime = (app as? MagpieRuntimeProvider)?.runtime()
+                val config = (app as? StartConfigProvider)?.config()
+                val running = runtime?.status()?.phase == MagpiePhase.Running
+                android.widget.Toast.makeText(
+                    app,
+                    if (running) R.string.bun_installed_restarting else R.string.bun_installed_next_start,
+                    android.widget.Toast.LENGTH_SHORT,
+                ).show()
+                if (running && config != null && runtime != null) {
+                    withContext(Dispatchers.IO) {
+                        runtime.stop().let { stopped -> if (stopped.isSuccess) runtime.start(config) else stopped }
+                    }
+                }
+            }.onFailure { error ->
+                android.widget.Toast.makeText(
+                    app,
+                    error.message ?: getString(R.string.bun_download_failed),
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
+            } finally {
+                componentDownloadJob = null
+            }
+        }
     }
 
     /**
@@ -380,13 +504,24 @@ class MainActivity : ComponentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (themePreference == ThemePreference.FollowSystem) updateToolbarColors()
+    }
+
     override fun onDestroy() {
         proxyDialog?.dismiss()
         proxyDialog = null
+        componentProgress?.dismiss()
+        componentProgress = null
         super.onDestroy()
     }
 
     private companion object {
+        private val componentScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        private var componentDownloadJob: Job? = null
+        private var componentProgress: android.app.AlertDialog? = null
+
         const val WEB_TAG = "magpie_web"
         const val DIAG_TAG = "magpie_diag"
         const val TOOLBAR_TAG = "magpie_toolbar"
@@ -395,5 +530,7 @@ class MainActivity : ComponentActivity() {
         const val MENU_RESTART = 3
         const val MENU_STOP = 4
         const val MENU_RESET = 5
+        const val MENU_EXPORT_LOGS = 6
+        const val MENU_COMPONENTS = 7
     }
 }

@@ -17,7 +17,7 @@
 - 可执行文件通过 `useLegacyPackaging = true` 解压到 `nativeLibraryDir`，不依赖 root。
 - 运行时文件位于 App 私有 `files/runtime/`，可随更新整体覆写；用户配置、登录态、模型缓存和备份位于独立的 `files/magpie/`，升级时保留。`keepData` 重置只清理运行时，完整重置才同时清理数据。
 - 配置使用 `XDG_CONFIG_HOME` / `XDG_CACHE_HOME` 重定向到 App 私有目录，不使用 `.portable`。
-- 不提供插件页面或 Bun 插件运行时；插件、会话检测和资源库入口从 Android 管理页移除。
+- 保留插件框架、第三方插件和自动签到；会话检测、资源库等桌面端入口隐藏。首页和菜单的「下载额外组件」按固定版本与 SHA-256 安装官方 Android Bun。
 
 ### 进程生命周期
 
@@ -29,6 +29,7 @@
 ## 3. UI 架构
 
 - Compose 负责安装、启动、错误和加载页。首页采用 Open Design `minimalist-ui` 的暖色单色方案：编辑式标题、细边框卡片、派卡主视觉、左对齐说明和单色主按钮；浅色使用暖白，深色使用低饱和海军蓝。
+- 工具栏为左侧菜单（含导出日志）、中间网络代理、右侧关于。全屏 About 使用作者头像、派卡原画帧动画、主题选择、检查更新和 Magpie 配置/官网/社区/开源许可链接；主题偏好存储在 `magpie_go_ui`。
 - 运行中由原生 `FrameLayout` 承载 WebView，不能把 WebView 移入 Compose `AndroidView`，也不能用 `setContent { }` 替换 Activity 根视图。
 - 管理页仍由 Magpie 自己提供，Android 只注入窄屏适配、品牌角色、备份辅助和 DSH Go 入口。
 - 返回键先消费 WebView 历史，无历史时退到后台。

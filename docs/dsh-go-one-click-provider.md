@@ -23,7 +23,7 @@
 3. DSH Go 显示确认框；用户确认前不修改配置。
 4. DSH Go 调用 `ProviderActions.discover` 验证引擎能读取模型，然后补读 Magpie `/v1/models` 的完整元数据。
 5. DSH Go 通过 `ProviderBackend.create/update` 写入 web profile 的 `cordis.patch.yml`，通过 `credentials.set` 保存 `MAGPIE_GATEWAY_KEY`。
-6. 三条路由分别验证模型列表。重复接入更新现有路由，不重复创建；空协议路由在目录更新时移除。
+6. 按 API 导入时更新三条协议路由；重复接入不重复创建，空协议路由仅在按 API 导入时移除。按 Provider 导入时分别写入 Auto Routing 和供应商路由。
 
 ### 三条路由
 
@@ -47,21 +47,21 @@ Magpie Go 只发起明确的接入链接，不接收 DSH Go 的凭据。
 - 同一协议、同一模型保留 compat 和用户设置的 `maxTokens`；协议变化时重新计算。
 - 输出上限按桌面规则为压缩预留空间：至少保留窗口四分之一，或窗口一半减 65536 中的较大者。
 - `reasoningEfforts` 使用 Magpie 当前 `supported_reasoning_levels` / `reasoning_levels`。
-- `auto/...` 路由组别名使用 `owned_by` 转成供应商前缀，按最终 ID 去重；原始元数据和协议信息随模型保留。
-- 只更新 Magpie 三条路由，其他 Provider 不动。
+- `auto/...` 保留自动路由原 ID，不与供应商模型合并；普通供应商路由使用 slug、稳定哈希和协议共同构成唯一路由 ID。
+- 只更新当前导入模式管理的 Magpie 路由，其他 Provider 不动；旧 Magpie Group 仅在 displayName 确认属于旧导入器时清理。
 
 ## 验证
 
 - Magpie Go：导航策略、备份文件映射、构建与真机链接。
 - DSH Go：三协议分组、compat 与输出上限保留、思考档位、深链接校验、`ProviderProfile` 超时字段往返。
 - 真机：确认框 → 三协议 Provider 出现 → 重复接入不重复 → 模型可选 → 重启后配置仍可读。
-- 当前 Magpie `/v1/models` 实测返回 70 个模型，Responses 与 Messages 的 `native_endpoints` 已用于分组验证。
+- 当前 Magpie `/v1/models` 已用于分组验证；模型数随供应商配置变化，Responses 与 Messages 使用 `native_endpoints` 识别。
 
 ## 导入方式与同步
 
 - 按 API 导入使用 `magpie`、`magpie-responses`、`magpie-anthropic` 三条协议路由。
-- 按 Provider 导入使用 `magpie-group`、`magpie-group-responses`、`magpie-group-anthropic`，作为 Magpie Group 分组名称；当前 DSH 的 `api` 仍是 Provider 级配置，不能混在一个协议 Provider 中。
-- `auto/...` 别名按 `owned_by` 转为供应商前缀，模型 displayName 也带供应商，便于在 DSH Go 中辨认。
+- 按 Provider 导入按 `owned_by` 分供应商，并按 DSH 要求拆成各协议路由；`auto/...` 自动路由模型单独进入 `Auto Routing` 及其 Responses/Anthropic 路由。
+- `auto/...` 保留原 ID，不改写为供应商 ID；普通模型 displayName 带供应商，自动路由模型带 `Auto Routing` 前缀。
 - 视觉模态只保留 DSH 支持的 `text` 和 `image`，过滤 `video`；Reasoning 使用 `off/light/xhigh/ultra` 映射。
 - 只允许本机引擎接入；更新每条路由前重新读取该路由和 revision，创建也带 revision，避免覆盖并发修改。
 - 手机端每分钟比较模型列表指纹；变化时通知“列表发生改变，请重新导入更新”，不自动覆盖现有配置。

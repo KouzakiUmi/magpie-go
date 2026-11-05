@@ -527,8 +527,8 @@ class AndroidMagpieRuntime private constructor(context: Context) : MagpieRuntime
                     put("XDG_CACHE_HOME", paths.cache.absolutePath)
                     put("NO_PROXY", "localhost,127.0.0.1,::1")
                     put("no_proxy", "localhost,127.0.0.1,::1")
-                    // 插件跑在 Bun 上。magpie 默认会下载 glibc 版 Bun，Android 用的是
-                    // bionic，那份执行不了；这里指向随包提供的 Android 构建。
+                    // 官方 Android Bun 由用户在「额外组件」中下载；核心网关不依赖它。
+                    if (paths.bun.isFile) put("MAGPIE_BUN", paths.bun.absolutePath)
                     remove("MAGPIE_WEB_KEY")
                     webKey?.let { put("MAGPIE_WEB_KEY", it) }
                 }

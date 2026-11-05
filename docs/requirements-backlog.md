@@ -11,7 +11,7 @@
 - 不输出或上传 API key、web key、订阅登录态和配置正文。测试优先使用不含密钥的备份，真实恢复与文件选择分别记录。
 - 诊断日志导出与配置导入/导出是不同功能；日志分享已实测可生成文件并弹出系统分享。
 
-## P1 — DSH Go 一键配置 Provider（进行中）
+## P1 — DSH Go 一键配置 Provider（已完成）
 
 - 复刻 Magpie 桌面端的 DSH 接入结果，而不是只展示手工填写说明。
 - 已核实的桌面实现：`internal/agent/dsh.go` 向 `llm-pi-ai.providers` 合并 Magpie 路由、写入 `agent-default-model` 和 `MAGPIE_GATEWAY_KEY`，并保留用户已有 Provider 与断开还原信息。
@@ -31,12 +31,12 @@
 - 暂时停用 Magpie 自身自动更新和检查更新入口。
 - 后续另立“APK 内更新 Magpie 内核”任务：仅使用官方 release，核验签名/哈希，写入 App 私有可执行目录并切换运行时；不得直接覆盖只读 `nativeLibraryDir`。
 
-## P3 — 主题、About 与工具栏
+## P3 — 主题、About 与工具栏（已完成）
 
 - 提供浅色和深色模式；浅色不用纯白，使用角色的冰蓝、暖白、深蓝、钴蓝和青绿配色。
 - 工具栏：左侧菜单包含「导出日志」，中间「网络代理」，右侧「关于」。
 - About 使用用户提供的 `umi-title.png` 作为作者头像。
-- About 顶部加入原创吉祥物的 APNG 动画：打招呼及多种可爱动作，参考 `dsh-furry-partner` 的表现方式，不复用其他角色身份。
+- 首页和 About 加入图像生成的派卡原画帧动画：站立、Wink、挥翼和开心动作，参考 `pi-furry-partner` 的表现方式，不复用其他角色身份，不使用脚本修图。
 - About 下方放作者介绍、GitHub、contributors 与感谢信息。
 - 版权：代码 CC BY-NC；内置 Magpie 按上游 MIT；原创角色和动画 ARR（保留所有权利）。
 - 作者 GitHub：`https://github.com/KouzakiUmi`。
